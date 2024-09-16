@@ -897,14 +897,15 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			pbuf += 3;
 			count = BufferIO::ReadUInt8(pbuf);
 			int c/*, l, s, ss, code*/;
+			int l;
 			for (int i = 0; i < count; ++i) {
 				pbufw = pbuf;
 				/*code = */BufferIO::ReadInt32(pbuf);
 				c = BufferIO::ReadUInt8(pbuf);
-				/*l = */BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
 				/*s = */BufferIO::ReadUInt8(pbuf);
 				/*ss = */BufferIO::ReadUInt8(pbuf);
-				if (c != player) BufferIO::WriteInt32(pbufw, 0);
+				if (c != player || l == LOCATION_DECK) BufferIO::WriteInt32(pbufw, 0);
 			}
 			WaitforResponse(player);
 			NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, offset, pbuf - offset);
