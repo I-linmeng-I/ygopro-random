@@ -2045,21 +2045,21 @@ void TagDuel::RequestField(DuelPlayer* dp) {
 	BufferIO::WriteInt16(pbuf_p, phase);
 	NetServer::SendBufferToPlayer(dp, STOC_GAME_MSG, phasebuf, 3);
 
-	// unsigned char query_buffer[1024];
-	// int length = query_field_info(pduel, (unsigned char*)query_buffer);
-	// NetServer::SendBufferToPlayer(dp, STOC_GAME_MSG, query_buffer, length);
-	// RefreshMzone(1 - player, 0xefffff, 0, dp);
-	// RefreshMzone(player, 0xefffff, 0, dp);
-	// RefreshSzone(1 - player, 0xefffff, 0, dp);
-	// RefreshSzone(player, 0xefffff, 0, dp);
-	// RefreshHand(1 - player, 0xefffff, 0, dp);
-	// RefreshHand(player, 0xefffff, 0, dp);
-	// RefreshGrave(1 - player, 0xefffff, 0, dp);
-	// RefreshGrave(player, 0xefffff, 0, dp);
-	// //RefreshExtra(1 - player, 0xefffff, 0, dp);
-	// //RefreshExtra(player, 0xefffff, 0, dp);
-	// RefreshRemoved(1 - player, 0xefffff, 0, dp);
-	// RefreshRemoved(player, 0xefffff, 0, dp);
+	unsigned char query_buffer[1024];
+	int length = query_field_info(pduel, (unsigned char*)query_buffer);
+	NetServer::SendBufferToPlayer(dp, STOC_GAME_MSG, query_buffer, length);
+	RefreshMzone(1 - player, 0xefffff, 0, dp);
+	RefreshMzone(player, 0xefffff, 0, dp);
+	RefreshSzone(1 - player, 0xefffff, 0, dp);
+	RefreshSzone(player, 0xefffff, 0, dp);
+	RefreshHand(1 - player, 0xefffff, 0, dp);
+	RefreshHand(player, 0xefffff, 0, dp);
+	RefreshGrave(1 - player, 0xefffff, 0, dp);
+	RefreshGrave(player, 0xefffff, 0, dp);
+	//RefreshExtra(1 - player, 0xefffff, 0, dp);
+	//RefreshExtra(player, 0xefffff, 0, dp);
+	RefreshRemoved(1 - player, 0xefffff, 0, dp);
+	RefreshRemoved(player, 0xefffff, 0, dp);
 	/*
 	if(dp == cur_player[last_response])
 		WaitforResponse(last_response);
@@ -2289,37 +2289,37 @@ void TagDuel::RefreshExtra(int player, int flag, int use_cache, DuelPlayer* dp)
 void TagDuel::RefreshExtra(int player, int flag, int use_cache)
 #endif //YGOPRO_SERVER_MODE
 {
-	std::vector<unsigned char> query_buffer;
-	query_buffer.resize(SIZE_QUERY_BUFFER);
-	auto qbuf = query_buffer.data();
-	auto len = WriteUpdateData(player, LOCATION_EXTRA, flag, qbuf, use_cache);
+	// std::vector<unsigned char> query_buffer;
+	// query_buffer.resize(SIZE_QUERY_BUFFER);
+	// auto qbuf = query_buffer.data();
+	// auto len = WriteUpdateData(player, LOCATION_EXTRA, flag, qbuf, use_cache);
 #ifdef YGOPRO_SERVER_MODE
-if(!dp || dp == cur_player[player])
+// if(!dp || dp == cur_player[player])
 #endif
-	NetServer::SendBufferToPlayer(cur_player[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
+	// NetServer::SendBufferToPlayer(cur_player[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
 #ifdef YGOPRO_SERVER_MODE
-	if(!dp)
-		NetServer::ReSendToPlayer(replay_recorder);
-	int qlen = 0;
-	while(qlen < len) {
-		int clen = BufferIO::ReadInt32(qbuf);
-		qlen += clen;
-		if (clen <= LEN_HEADER)
-			continue;
-		auto position = GetPosition(qbuf, 8);
-		if (position & POS_FACEDOWN)
-			memset(qbuf, 0, clen - 4);
-		qbuf += clen - 4;
-	}
-	for(int i = 0; i < 4; ++i)
-		if(!dp || dp == players[i])
-			if(players[i] != cur_player[player])
-				NetServer::SendBufferToPlayer(players[i], STOC_GAME_MSG, query_buffer.data(), len + 3);
-	if(!dp)
-		for(auto pit = observers.begin(); pit != observers.end(); ++pit)
-			NetServer::ReSendToPlayer(*pit);
-	if(!dp)
-		NetServer::ReSendToPlayer(cache_recorder);
+	// if(!dp)
+	// 	NetServer::ReSendToPlayer(replay_recorder);
+	// int qlen = 0;
+	// while(qlen < len) {
+	// 	int clen = BufferIO::ReadInt32(qbuf);
+	// 	qlen += clen;
+	// 	if (clen <= LEN_HEADER)
+	// 		continue;
+	// 	auto position = GetPosition(qbuf, 8);
+	// 	if (position & POS_FACEDOWN)
+	// 		memset(qbuf, 0, clen - 4);
+	// 	qbuf += clen - 4;
+	// }
+	// for(int i = 0; i < 4; ++i)
+	// 	if(!dp || dp == players[i])
+	// 		if(players[i] != cur_player[player])
+	// 			NetServer::SendBufferToPlayer(players[i], STOC_GAME_MSG, query_buffer.data(), len + 3);
+	// if(!dp)
+	// 	for(auto pit = observers.begin(); pit != observers.end(); ++pit)
+	// 		NetServer::ReSendToPlayer(*pit);
+	// if(!dp)
+	// 	NetServer::ReSendToPlayer(cache_recorder);
 #endif
 }
 #ifdef YGOPRO_SERVER_MODE
