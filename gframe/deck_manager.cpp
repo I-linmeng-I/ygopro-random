@@ -169,7 +169,7 @@ int DeckManager::LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec, bool is_p
 	// 筛选卡片代码
 	for (const auto &card : allCardsData)
 	{
-		if (!(card.second.type & TYPE_TOKEN) && banlist.find(card.first) == banlist.end())
+		if (!(card.second.type & TYPE_TOKEN) && banlist.find(card.first) == banlist.end() && !(card.second.type & TYPE_NORMAL))
 		{ // 排除Token类型和禁止的卡
 			if (card.second.type & (TYPE_FUSION | TYPE_SYNCHRO | TYPE_XYZ | TYPE_LINK))
 			{
