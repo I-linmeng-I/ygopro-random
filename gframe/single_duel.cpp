@@ -832,7 +832,15 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		case MSG_SELECT_BATTLECMD: {
 			player = BufferIO::ReadUInt8(pbuf);
 			count = BufferIO::ReadUInt8(pbuf);
-			pbuf += count * 11;
+			int l;
+			for(int i = 0;i<count;++i){
+				pbufw = pbuf;
+				/*code = */BufferIO::ReadInt32(pbuf);
+				BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
+				pbuf += 5;
+				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			}
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 8 + 2;
 			RefreshMzone(0);
@@ -854,7 +862,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				/*code = */BufferIO::ReadInt32(pbuf);
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
-				pbuf += count * 2;
+				pbuf += 1;
 				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
@@ -863,7 +871,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				/*code = */BufferIO::ReadInt32(pbuf);
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
-				pbuf += count * 2;
+				pbuf += 1;
 				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
@@ -872,7 +880,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				/*code = */BufferIO::ReadInt32(pbuf);
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
-				pbuf += count * 2;
+				pbuf += 1;
 				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
@@ -881,7 +889,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				/*code = */BufferIO::ReadInt32(pbuf);
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
-				pbuf += count * 2;
+				pbuf += 1;
 				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
@@ -890,7 +898,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				/*code = */BufferIO::ReadInt32(pbuf);
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
-				pbuf += count * 2;
+				pbuf += 1;
 				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
@@ -899,7 +907,7 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				/*code = */BufferIO::ReadInt32(pbuf);
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
-				pbuf += count * 6;
+				pbuf += 5;
 				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
 			}
 			pbuf += 3;
@@ -915,7 +923,13 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		}
 		case MSG_SELECT_EFFECTYN: {
 			player = BufferIO::ReadUInt8(pbuf);
-			pbuf += 12;
+			int l;
+			pbufw = pbuf;
+			/*code = */BufferIO::ReadInt32(pbuf);
+			BufferIO::ReadUInt8(pbuf);
+			l = BufferIO::ReadUInt8(pbuf);
+			pbuf += 6;
+			if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
 			WaitforResponse(player);
 			NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, offset, pbuf - offset);
 			return 1;
