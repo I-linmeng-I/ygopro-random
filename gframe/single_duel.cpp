@@ -628,8 +628,8 @@ void SingleDuel::TPResult(DuelPlayer* dp, unsigned char tp) {
 	turn_player = 0;
 	phase = 1;
 #endif
-	RefreshExtra(0);
-	RefreshExtra(1);
+	// RefreshExtra(0);
+	// RefreshExtra(1);
 	start_duel(pduel, opt);
 	if(host_info.time_limit) {
 		time_elapsed = 0;
