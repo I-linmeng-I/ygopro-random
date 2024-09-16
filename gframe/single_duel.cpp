@@ -846,19 +846,63 @@ int SingleDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			return 1;
 		}
 		case MSG_SELECT_IDLECMD: {
+			int l;
 			player = BufferIO::ReadUInt8(pbuf);
 			count = BufferIO::ReadUInt8(pbuf);
-			pbuf += count * 7;
+			for(int i = 0;i<count;++i){
+				pbufw = pbuf;
+				/*code = */BufferIO::ReadInt32(pbuf);
+				BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
+				pbuf += count * 2;
+				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			}
 			count = BufferIO::ReadUInt8(pbuf);
-			pbuf += count * 7;
+			for(int i = 0;i<count;++i){
+				pbufw = pbuf;
+				/*code = */BufferIO::ReadInt32(pbuf);
+				BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
+				pbuf += count * 2;
+				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			}
 			count = BufferIO::ReadUInt8(pbuf);
-			pbuf += count * 7;
+			for(int i = 0;i<count;++i){
+				pbufw = pbuf;
+				/*code = */BufferIO::ReadInt32(pbuf);
+				BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
+				pbuf += count * 2;
+				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			}
 			count = BufferIO::ReadUInt8(pbuf);
-			pbuf += count * 7;
+			for(int i = 0;i<count;++i){
+				pbufw = pbuf;
+				/*code = */BufferIO::ReadInt32(pbuf);
+				BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
+				pbuf += count * 2;
+				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			}
 			count = BufferIO::ReadUInt8(pbuf);
-			pbuf += count * 7;
+			for(int i = 0;i<count;++i){
+				pbufw = pbuf;
+				/*code = */BufferIO::ReadInt32(pbuf);
+				BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
+				pbuf += count * 2;
+				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			}
 			count = BufferIO::ReadUInt8(pbuf);
-			pbuf += count * 11 + 3;
+			for(int i = 0;i<count;++i){
+				pbufw = pbuf;
+				/*code = */BufferIO::ReadInt32(pbuf);
+				BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
+				pbuf += count * 6;
+				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			}
+			pbuf += 3;
 			RefreshMzone(0);
 			RefreshMzone(1);
 			RefreshSzone(0);
