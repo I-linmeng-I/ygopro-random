@@ -796,7 +796,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
 				pbuf += 5;
-				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
 			pbuf += count * 8 + 2;
@@ -820,7 +820,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
 				pbuf += 1;
-				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
 			for(int i = 0;i<count;++i){
@@ -829,7 +829,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
 				pbuf += 1;
-				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
 			for(int i = 0;i<count;++i){
@@ -838,7 +838,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
 				pbuf += 1;
-				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
 			for(int i = 0;i<count;++i){
@@ -847,7 +847,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
 				pbuf += 1;
-				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
 			for(int i = 0;i<count;++i){
@@ -856,7 +856,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
 				pbuf += 1;
-				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
 			for(int i = 0;i<count;++i){
@@ -865,7 +865,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				BufferIO::ReadUInt8(pbuf);
 				l = BufferIO::ReadUInt8(pbuf);
 				pbuf += 5;
-				if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			pbuf += 3;
 			RefreshMzone(0);
@@ -886,7 +886,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			BufferIO::ReadUInt8(pbuf);
 			l = BufferIO::ReadUInt8(pbuf);
 			pbuf += 6;
-			if(l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+			if(l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			WaitforResponse(player);
 			NetServer::SendBufferToPlayer(cur_player[player], STOC_GAME_MSG, offset, pbuf - offset);
 			return 1;
@@ -920,7 +920,7 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				l = BufferIO::ReadUInt8(pbuf);
 				/*s = */BufferIO::ReadUInt8(pbuf);
 				/*ss = */BufferIO::ReadUInt8(pbuf);
-				if (c != player || l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if (c != player || l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			WaitforResponse(player);
 			NetServer::SendBufferToPlayer(cur_player[player], STOC_GAME_MSG, offset, pbuf - offset);
@@ -939,17 +939,17 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 				l = BufferIO::ReadUInt8(pbuf);
 				/*s = */BufferIO::ReadUInt8(pbuf);
 				/*ss = */BufferIO::ReadUInt8(pbuf);
-				if (c != player || l == LOCATION_DECK || l== LOCATION_EXTRA) BufferIO::WriteInt32(pbufw, 0);
+				if (c != player || l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			count = BufferIO::ReadUInt8(pbuf);
 			for (int i = 0; i < count; ++i) {
 				pbufw = pbuf;
 				/*code = */BufferIO::ReadInt32(pbuf);
 				c = BufferIO::ReadUInt8(pbuf);
-				/*l = */BufferIO::ReadUInt8(pbuf);
+				l = BufferIO::ReadUInt8(pbuf);
 				/*s = */BufferIO::ReadUInt8(pbuf);
 				/*ss = */BufferIO::ReadUInt8(pbuf);
-				if (c != player) BufferIO::WriteInt32(pbufw, 0);
+				if (c != player || l & LOCATION_DECK == true || l& LOCATION_EXTRA == true) BufferIO::WriteInt32(pbufw, 0);
 			}
 			WaitforResponse(player);
 			NetServer::SendBufferToPlayer(cur_player[player], STOC_GAME_MSG, offset, pbuf - offset);
