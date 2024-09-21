@@ -2369,7 +2369,7 @@ void TagDuel::RefreshSingle(int player, int location, int sequence, int flag) {
 	flag |= (QUERY_CODE | QUERY_POSITION);
 	unsigned char query_buffer[0x1000];
 	auto qbuf = query_buffer;
-	location = location & ~(LOCATION_DECK | LOCATION_EXTRA);
+	location = location & ~(LOCATION_DECK);
 	BufferIO::WriteInt8(qbuf, MSG_UPDATE_CARD);
 	BufferIO::WriteInt8(qbuf, player);
 	BufferIO::WriteInt8(qbuf, location);
@@ -2394,6 +2394,11 @@ void TagDuel::RefreshSingle(int player, int location, int sequence, int flag) {
 #endif
 		}
 	} else {
+		if (location & LOCATION_EXTRA) {
+			BufferIO::WriteInt32(qbuf, QUERY_CODE);
+			BufferIO::WriteInt32(qbuf, 0);
+			std::memset(qbuf, 0, clen - 12);
+		}
 		int pid = (player == 0) ? 0 : 2;
 		NetServer::SendBufferToPlayer(players[pid], STOC_GAME_MSG, query_buffer, len + 4);
 		NetServer::ReSendToPlayer(players[pid + 1]);
