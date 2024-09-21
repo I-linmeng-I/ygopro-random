@@ -2230,20 +2230,20 @@ void SingleDuel::RefreshSingle(int player, int location, int sequence, int flag)
 	auto qbuf = query_buffer;
 	BufferIO::WriteInt8(qbuf, MSG_UPDATE_CARD);
 	BufferIO::WriteInt8(qbuf, player);
-	location = location & ~(LOCATION_DECK | LOCATION_EXTRA);
+	//location = location & ~(LOCATION_DECK | LOCATION_EXTRA);
 	BufferIO::WriteInt8(qbuf, location);
 	BufferIO::WriteInt8(qbuf, sequence);
 	int len = query_card(pduel, player, location, sequence, flag, qbuf, 0);
-	NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, query_buffer, len + 4);
-	if (len <= LEN_HEADER)
-		return;
 	const int clen = BufferIO::ReadInt32(qbuf);
 	auto position = GetPosition(qbuf, 8);
-	if (position & POS_FACEDOWN) {
+	if (position & POS_FACEDOWN || location & LOCATION_EXTRA) {
 		BufferIO::WriteInt32(qbuf, QUERY_CODE);
 		BufferIO::WriteInt32(qbuf, 0);
 		std::memset(qbuf, 0, clen - 12);
 	}
+	NetServer::SendBufferToPlayer(players[player], STOC_GAME_MSG, query_buffer, len + 4);
+	if (len <= LEN_HEADER)
+		return;
 	NetServer::SendBufferToPlayer(players[1 - player], STOC_GAME_MSG, query_buffer, len + 4);
 	for (auto pit = observers.begin(); pit != observers.end(); ++pit)
 		NetServer::ReSendToPlayer(*pit);
