@@ -2375,6 +2375,7 @@ void TagDuel::RefreshSingle(int player, int location, int sequence, int flag) {
 	BufferIO::WriteInt8(qbuf, location);
 	BufferIO::WriteInt8(qbuf, sequence);
 	int len = query_card(pduel, player, location, sequence, flag, qbuf, 0);
+	const int clen = BufferIO::ReadInt32(qbuf);
 	auto position = GetPosition(qbuf, 12);
 	if(location & LOCATION_ONFIELD) {
 		int pid = (player == 0) ? 0 : 2;
