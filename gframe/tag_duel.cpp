@@ -2395,7 +2395,7 @@ void TagDuel::RefreshSingle(int player, int location, int sequence, int flag) {
 #endif
 		}
 	} else {
-		if (location & LOCATION_EXTRA) {
+		if (location ==LOCATION_EXTRA) {
 			BufferIO::WriteInt32(qbuf, QUERY_CODE);
 			BufferIO::WriteInt32(qbuf, 0);
 			std::memset(qbuf, 0, clen - 12);
