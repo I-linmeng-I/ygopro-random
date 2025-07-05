@@ -93,21 +93,23 @@ static unsigned int checkAvail(unsigned int ot, unsigned int avail) {
 }
 unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int rule) {
 	std::unordered_map<int, int> ccount;
-	auto list = GetLFListContent(lfhash);
-	if(!list)
+	// rule
+	// if(deck.main.size() < DECK_MIN_SIZE || deck.main.size() > DECK_MAX_SIZE)
+	// 	return (DECKERROR_MAINCOUNT << 28) | (unsigned)deck.main.size();
+	// if(deck.extra.size() > EXTRA_MAX_SIZE)
+	// 	return (DECKERROR_EXTRACOUNT << 28) | (unsigned)deck.extra.size();
+	// if(deck.side.size() > SIDE_MAX_SIZE)
+	// 	return (DECKERROR_SIDECOUNT << 28) | (unsigned)deck.side.size();
+	auto lflist = GetLFList(lfhash);
+	if (!lflist)
 		return 0;
-	int dc = 0;
-	// if(deck.main.size() < 40 || deck.main.size() > 60)
-	// 	return (DECKERROR_MAINCOUNT << 28) + deck.main.size();
-	// if(deck.extra.size() > 15)
-	// 	return (DECKERROR_EXTRACOUNT << 28) + deck.extra.size();
-	if(deck.side.size() > 15)
-		return (DECKERROR_SIDECOUNT << 28) + deck.side.size();
-	const int rule_map[6] = { AVAIL_OCG, AVAIL_TCG, AVAIL_SC, AVAIL_CUSTOM, AVAIL_OCGTCG, 0 };
-	int avail = rule_map[rule];
-	for(size_t i = 0; i < deck.main.size(); ++i) {
-		code_pointer cit = deck.main[i];
-		int gameruleDeckError = checkAvail(cit->second.ot, avail);
+	auto& list = lflist->content;
+	const unsigned int rule_map[6] = { AVAIL_OCG, AVAIL_TCG, AVAIL_SC, AVAIL_CUSTOM, AVAIL_OCGTCG, 0 };
+	unsigned int avail = 0;
+	if (rule >= 0 && rule < (int)(sizeof rule_map / sizeof rule_map[0]))
+		avail = rule_map[rule];
+	for (auto& cit : deck.main) {
+		auto gameruleDeckError = checkAvail(cit->second.ot, avail);
 		if(gameruleDeckError)
 			return (gameruleDeckError << 28) | cit->first;
 		if (cit->second.type & (TYPES_EXTRA_DECK | TYPE_TOKEN))
