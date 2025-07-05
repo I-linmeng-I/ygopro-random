@@ -10,7 +10,7 @@
 #include <random>
 #include <unordered_set>
 #include "myfilesystem.h"
-#include "network.h"aa
+#include "network.h"
 
 namespace ygo {
 
@@ -153,7 +153,7 @@ unsigned int DeckManager::CheckDeck(const Deck& deck, unsigned int lfhash, int r
 	}
 	return 0;
 }
-int DeckManager::LoadDeck(Deck& deck, int* dbuf, int mainc, int sidec, bool is_packlist) {
+uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec, bool is_packlist) {
 	auto &allCardsData = dataManager.GetAllCardsData(); // 获取所有卡片数据
 	std::vector<unsigned int> mainCodes, extraCodes;
 
