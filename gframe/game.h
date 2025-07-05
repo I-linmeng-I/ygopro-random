@@ -16,7 +16,7 @@
 #include "client_field.h"
 #include "deck_con.h"
 #include "menu_handler.h"
-#include <time.h>
+#include <ctime>
 #else
 #include "netserver.h"
 #endif //YGOPRO_SERVER_MODE
@@ -31,13 +31,39 @@
 #endif
 
 #define DEFAULT_DUEL_RULE YGOPRO_DEFAULT_DUEL_RULE
+constexpr int CONFIG_LINE_SIZE = 1024;
+constexpr int TEXT_LINE_SIZE = 256;
 
 namespace ygo {
+
+template<size_t N>
+bool IsExtension(const wchar_t* filename, const wchar_t(&extension)[N]) {
+	auto flen = std::wcslen(filename);
+	constexpr size_t elen = N - 1;
+	if (!elen || flen < elen)
+		return false;
+	return !mywcsncasecmp(filename + (flen - elen), extension, elen);
+}
+
+template<size_t N>
+bool IsExtension(const char* filename, const char(&extension)[N]) {
+	auto flen = std::strlen(filename);
+	constexpr size_t elen = N - 1;
+	if (!elen || flen < elen)
+		return false;
+	return !mystrncasecmp(filename + (flen - elen), extension, elen);
+}
 
 #ifndef YGOPRO_SERVER_MODE
 struct Config {
 	bool use_d3d{ false };
 	bool use_image_scale{ true };
+	bool use_image_scale_multi_thread{ true };
+#ifdef _OPENMP
+	bool use_image_load_background_thread{ false };
+#else
+	bool use_image_load_background_thread{ true };
+#endif
 	unsigned short antialias{ 0 };
 	unsigned short serverport{ 7911 };
 	unsigned char textfontsize{ 14 };
@@ -45,12 +71,13 @@ struct Config {
 	wchar_t lastport[10]{};
 	wchar_t nickname[20]{};
 	wchar_t gamename[20]{};
-	wchar_t lastcategory[64]{};
-	wchar_t lastdeck[64]{};
+	wchar_t roompass[20]{};
+	//path
+	wchar_t lastcategory[256]{};
+	wchar_t lastdeck[256]{};
 	wchar_t textfont[256]{};
 	wchar_t numfont[256]{};
-	wchar_t roompass[20]{};
-	wchar_t bot_deck_path[64]{};
+	wchar_t bot_deck_path[256]{};
 	//settings
 	int chkMAutoPos{ 0 };
 	int chkSTAutoPos{ 1 };
@@ -111,7 +138,7 @@ struct DuelInfo {
 	wchar_t hostname_tag[20]{};
 	wchar_t clientname_tag[20]{};
 	wchar_t strLP[2][16]{};
-	wchar_t* vic_string{ nullptr };
+	std::wstring vic_string;
 	unsigned char player_type{ 0 };
 	unsigned char time_player{ 0 };
 	unsigned short time_limit{ 0 };
@@ -153,9 +180,9 @@ public:
 	void AddDebugMsg(const char* msgbuf);
 #else
 	void MainLoop();
-	void BuildProjectionMatrix(irr::core::matrix4& mProjection, f32 left, f32 right, f32 bottom, f32 top, f32 znear, f32 zfar);
-	void InitStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
-	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, u32 pos = 0);
+	void BuildProjectionMatrix(irr::core::matrix4& mProjection, irr::f32 left, irr::f32 right, irr::f32 bottom, irr::f32 top, irr::f32 znear, irr::f32 zfar);
+	void InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::u32 cHeight, irr::gui::CGUITTFont* font, const wchar_t* text);
+	std::wstring SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos = 0);
 	void LoadExpansions();
 	void RefreshCategoryDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck, bool selectlastused = true);
 	void RefreshDeck(irr::gui::IGUIComboBox* cbCategory, irr::gui::IGUIComboBox* cbDeck);
@@ -170,7 +197,6 @@ public:
 	void CheckMutual(ClientCard* pcard, int mark);
 	void DrawCards();
 	void DrawCard(ClientCard* pcard);
-	void DrawShadowText(irr::gui::CGUITTFont* font, const core::stringw& text, const core::rect<s32>& position, const core::rect<s32>& padding, video::SColor color = 0xffffffff, video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const core::rect<s32>* clip = 0);
 	void DrawMisc();
 	void DrawStatus(ClientCard* pcard, int x1, int y1, int x2, int y2);
 	void DrawGUI();
@@ -180,7 +206,7 @@ public:
 	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
 	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
 	void WaitFrameSignal(int frame);
-	void DrawThumb(code_pointer cp, position2di pos, const std::unordered_map<int,int>* lflist, bool drag = false);
+	void DrawThumb(code_pointer cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
 	void DrawDeckBd();
 	void LoadConfig();
 	void SaveConfig();
@@ -201,7 +227,7 @@ public:
 	int ChatLocalPlayer(int player);
 	const wchar_t* LocalName(int local_player);
 
-	bool HasFocus(EGUI_ELEMENT_TYPE type) const {
+	bool HasFocus(irr::gui::EGUI_ELEMENT_TYPE type) const {
 		irr::gui::IGUIElement* focus = env->getFocus();
 		return focus && focus->hasType(type);
 	}
@@ -214,23 +240,26 @@ public:
 
 	void OnResize();
 	void ResizeChatInputWindow();
-	recti Resize(s32 x, s32 y, s32 x2, s32 y2);
-	recti Resize(s32 x, s32 y, s32 x2, s32 y2, s32 dx, s32 dy, s32 dx2, s32 dy2);
-	position2di Resize(s32 x, s32 y);
-	position2di ResizeReverse(s32 x, s32 y);
-	recti ResizePhaseHint(s32 x, s32 y, s32 x2, s32 y2, s32 width);
-	recti ResizeWin(s32 x, s32 y, s32 x2, s32 y2);
-	recti ResizeCardImgWin(s32 x, s32 y, s32 mx, s32 my);
-	recti ResizeCardHint(s32 x, s32 y, s32 x2, s32 y2);
-	position2di ResizeCardHint(s32 x, s32 y);
-	recti ResizeCardMid(s32 x, s32 y, s32 x2, s32 y2, s32 midx, s32 midy);
-	position2di ResizeCardMid(s32 x, s32 y, s32 midx, s32 midy);
-	recti ResizeFit(s32 x, s32 y, s32 x2, s32 y2);
+	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::recti Resize(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 dx, irr::s32 dy, irr::s32 dx2, irr::s32 dy2);
+	irr::core::vector2di Resize(irr::s32 x, irr::s32 y);
+	irr::core::vector2di ResizeReverse(irr::s32 x, irr::s32 y);
+	irr::core::recti ResizePhaseHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 width);
+	irr::core::recti ResizeWin(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::recti ResizeCardImgWin(irr::s32 x, irr::s32 y, irr::s32 mx, irr::s32 my);
+	irr::core::recti ResizeCardHint(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
+	irr::core::vector2di ResizeCardHint(irr::s32 x, irr::s32 y);
+	irr::core::recti ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2, irr::s32 midx, irr::s32 midy);
+	irr::core::vector2di ResizeCardMid(irr::s32 x, irr::s32 y, irr::s32 midx, irr::s32 midy);
+	irr::core::recti ResizeFit(irr::s32 x, irr::s32 y, irr::s32 x2, irr::s32 y2);
 
 	void SetWindowsIcon();
 	void SetWindowsScale(float scale);
 	void FlashWindow();
-	void SetCursor(ECURSOR_ICON icon);
+	void SetCursor(irr::gui::ECURSOR_ICON icon);
+	template<typename T>
+	static void DrawShadowText(irr::gui::CGUITTFont* font, const T& text, const irr::core::rect<irr::s32>& position, const irr::core::rect<irr::s32>& padding,
+		irr::video::SColor color = 0xffffffff, irr::video::SColor shadowcolor = 0xff000000, bool hcenter = false, bool vcenter = false, const irr::core::rect<irr::s32>* clip = nullptr);
 
 	std::mutex gMutex;
 	Signal frameSignal;
@@ -247,41 +276,41 @@ public:
 	std::wstring chatMsg[8];
 	std::vector<BotInfo> botInfo;
 
-	int hideChatTimer;
-	bool hideChat;
+	int hideChatTimer{};
+	bool hideChat{};
 	int chatTiming[8]{};
 	int chatType[8]{};
-	unsigned short linePatternD3D;
-	unsigned short linePatternGL;
-	int waitFrame;
-	int signalFrame;
-	int actionParam;
-	int showingcode;
-	const wchar_t* showingtext;
-	int showcard;
-	int showcardcode;
-	int showcarddif;
-	int showcardp;
-	int is_attacking;
-	int attack_sv;
+	unsigned short linePatternD3D{};
+	unsigned short linePatternGL{ 0x0f0f };
+	int waitFrame{};
+	int signalFrame{};
+	int actionParam{};
+	int showingcode{};
+	const wchar_t* showingtext{};
+	int showcard{};
+	int showcardcode{};
+	int showcarddif{};
+	int showcardp{};
+	int is_attacking{};
+	int attack_sv{};
 	irr::core::vector3df atk_r;
 	irr::core::vector3df atk_t;
-	float atkdy;
-	int lpframe;
-	int lpd;
-	int lpplayer;
-	int lpccolor;
-	wchar_t* lpcstring;
-	bool always_chain;
-	bool ignore_chain;
-	bool chain_when_avail;
+	float atkdy{};
+	int lpframe{};
+	int lpd{};
+	int lpplayer{};
+	int lpccolor{};
+	std::wstring lpcstring;
+	bool always_chain{};
+	bool ignore_chain{};
+	bool chain_when_avail{};
 
-	bool is_building;
-	bool is_siding;
+	bool is_building{};
+	bool is_siding{};
 
 	irr::core::dimension2d<irr::u32> window_size;
-	float xScale;
-	float yScale;
+	float xScale{ 1.0f };
+	float yScale{ 1.0f };
 
 	ClientField dField;
 	DeckBuilder deckBuilder;
@@ -302,7 +331,7 @@ public:
 	irr::gui::CGUITTFont* numFont;
 	irr::gui::CGUITTFont* adFont;
 	irr::gui::CGUITTFont* lpcFont;
-	std::map<irr::gui::CGUIImageButton*, int> imageLoading;
+	std::unordered_map<irr::gui::CGUIImageButton*, int> imageLoading;
 	//card image
 	irr::gui::IGUIStaticText* wCardImg;
 	irr::gui::IGUIImage* imgCard;
@@ -559,6 +588,8 @@ public:
 	irr::gui::IGUIButton* btnDMDeleteDeck;
 	irr::gui::IGUIButton* btnMoveDeck;
 	irr::gui::IGUIButton* btnCopyDeck;
+	irr::gui::IGUIButton* btnImportDeckCode;
+	irr::gui::IGUIButton* btnExportDeckCode;
 	irr::gui::IGUIWindow* wDMQuery;
 	irr::gui::IGUIStaticText* stDMMessage;
 	irr::gui::IGUIStaticText* stDMMessage2;
@@ -629,10 +660,13 @@ public:
 extern Game* mainGame;
 
 #ifdef YGOPRO_SERVER_MODE
+#define MAX_MATCH_COUNT 3
+
 extern unsigned short server_port;
 extern unsigned short replay_mode;
 extern HostInfo game_info;
-extern unsigned int pre_seed[3];
+extern uint32_t pre_seed[MAX_MATCH_COUNT][SEED_COUNT];
+extern uint8_t pre_seed_specified[MAX_MATCH_COUNT];
 #endif
 }
 
@@ -823,6 +857,8 @@ extern unsigned int pre_seed[3];
 #define LISTBOX_DECKS				340
 #define BUTTON_DM_OK				341
 #define BUTTON_DM_CANCEL			342
+#define BUTTON_IMPORT_DECK_CODE		343
+#define BUTTON_EXPORT_DECK_CODE		344
 #define COMBOBOX_LFLIST				349
 
 #define BUTTON_CLEAR_LOG			350
@@ -849,19 +885,6 @@ extern unsigned int pre_seed[3];
 #define BUTTON_BIG_CARD_ZOOM_IN		381
 #define BUTTON_BIG_CARD_ZOOM_OUT	382
 #define BUTTON_BIG_CARD_ORIG_SIZE	383
-
-//STOC_GAME_MSG messages
-#define MSG_WAITING				3
-#define MSG_START				4
-#define MSG_UPDATE_DATA			6	// flag=0: clear
-#define MSG_UPDATE_CARD			7	// flag=QUERY_CODE, code=0: clear
-#define MSG_REQUEST_DECK		8
-#define MSG_REFRESH_DECK		34
-#define MSG_CARD_SELECTED		80
-#define MSG_UNEQUIP				95
-#define MSG_BE_CHAIN_TARGET		121
-#define MSG_CREATE_RELATION		122
-#define MSG_RELEASE_RELATION	123
 
 #define AVAIL_OCG					0x1
 #define AVAIL_TCG					0x2

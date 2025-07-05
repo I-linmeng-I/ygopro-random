@@ -3,6 +3,9 @@
 
 #define _IRR_STATIC_LIB_
 #define IRR_COMPILE_WITH_DX9_DEV_PACK
+
+#include <cerrno>
+
 #ifdef _WIN32
 
 #define NOMINMAX
@@ -10,7 +13,7 @@
 #include <windows.h>
 #include <ws2tcpip.h>
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) or defined(__MINGW32__)
 #define mywcsncasecmp _wcsnicmp
 #define mystrncasecmp _strnicmp
 #else
@@ -22,7 +25,6 @@
 
 #else //_WIN32
 
-#include <errno.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -43,49 +45,50 @@
 #define mystrncasecmp strncasecmp
 #endif
 
-#include <wchar.h>
-template<size_t N, typename... TR>
-inline int myswprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
-	return swprintf(buf, N, fmt, args...);
-}
-
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <algorithm>
 #include <string>
 #include "bufferio.h"
 #include "../ocgcore/ocgapi.h"
-#include "../ocgcore/common.h"
 
-inline FILE* myfopen(const char* filename, const char* mode) {
+template<size_t N, typename... TR>
+inline int myswprintf(wchar_t(&buf)[N], const wchar_t* fmt, TR... args) {
+	return std::swprintf(buf, N, fmt, args...);
+}
+
+inline FILE* mywfopen(const wchar_t* filename, const char* mode) {
 	FILE* fp{};
 #ifdef _WIN32
-	wchar_t wname[256]{};
 	wchar_t wmode[20]{};
-	BufferIO::DecodeUTF8(filename, wname);
-	BufferIO::CopyWStr(mode, wmode, sizeof wmode / sizeof wmode[0]);
-	fp = _wfopen(wname, wmode);
+	BufferIO::CopyCharArray(mode, wmode);
+	fp = _wfopen(filename, wmode);
 #else
-	fp = fopen(filename, mode);
+	char fname[1024]{};
+	BufferIO::EncodeUTF8(filename, fname);
+	fp = std::fopen(fname, mode);
 #endif
 	return fp;
 }
 
-#ifndef YGOPRO_SERVER_MODE
-#include <irrlicht.h>
-using namespace irr;
-using namespace core;
-using namespace scene;
-using namespace video;
-using namespace io;
-using namespace gui;
-#endif //YGOPRO_SERVER_MODE
+#if !defined(_WIN32)
+#define myfopen std::fopen
+#elif defined(WDK_NTDDI_VERSION) && (WDK_NTDDI_VERSION >= 0x0A000005) // Redstone 4, Version 1803, Build 17134.
+#define FOPEN_WINDOWS_SUPPORT_UTF8
+#define myfopen std::fopen
+#else
+inline FILE* myfopen(const char* filename, const char* mode) {
+	wchar_t wfilename[256]{};
+	BufferIO::DecodeUTF8(filename, wfilename);
+	wchar_t wmode[20]{};
+	BufferIO::CopyCharArray(mode, wmode);
+	return _wfopen(wfilename, wmode);
+}
+#endif
 
-#ifdef SERVER_ZIP_SUPPORT
+#if !defined(YGOPRO_SERVER_MODE) || defined(SERVER_ZIP_SUPPORT)
 #include <irrlicht.h>
-using namespace irr;
-using namespace io;
 #endif
 
 extern const unsigned short PRO_VERSION;
