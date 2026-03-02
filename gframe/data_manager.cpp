@@ -99,7 +99,7 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 		ret = ReadDB(pDB);
 	sqlite3_close(pDB);
 #else
-#ifdef _WIN32
+#ifdef _IRR_WCHAR_FILESYSTEM
 	auto reader = FileSystem->createAndOpenFile(wfile);
 #else
 	auto reader = FileSystem->createAndOpenFile(file);
@@ -267,16 +267,30 @@ const wchar_t* DataManager::GetSetName(uint32_t code) const {
 std::vector<uint32_t> DataManager::GetSetCodes(std::wstring setname) const {
 	std::vector<uint32_t> matchingCodes;
 	for(auto csit = _setnameStrings.begin(); csit != _setnameStrings.end(); ++csit) {
-		auto xpos = csit->second.find_first_of(L'|');//setname|another setname or extra info
-		if(setname.size() < 2) {
-			if(csit->second.compare(0, xpos, setname) == 0
-				|| csit->second.compare(xpos + 1, csit->second.length(), setname) == 0)
-				matchingCodes.push_back(csit->first);
-		} else {
-			if(csit->second.substr(0, xpos).find(setname) != std::wstring::npos
-				|| csit->second.substr(xpos + 1).find(setname) != std::wstring::npos) {
-				matchingCodes.push_back(csit->first);
+		const std::wstring& setnameString = csit->second;
+		size_t start = 0;
+		while(start < setnameString.size()) { // handle "setname|another setname"
+			auto pos = setnameString.find(L'|', start);
+			std::wstring token;
+			if(pos == std::wstring::npos)
+				token = setnameString.substr(start);
+			else
+				token = setnameString.substr(start, pos - start);
+			if(setname.size() < 2) {
+				// exact match for short set names to avoid too many results
+				if(token == setname) {
+					matchingCodes.push_back(csit->first);
+					break;
+				}
+			} else {
+				if(token.find(setname) != std::wstring::npos) {
+					matchingCodes.push_back(csit->first);
+					break;
+				}
 			}
+			if(pos == std::wstring::npos)
+				break;
+			start = pos + 1;
 		}
 	}
 	return matchingCodes;
@@ -435,7 +449,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_path, int* slen) {
 }
 #if !defined(YGOPRO_SERVER_MODE) || defined(SERVER_ZIP_SUPPORT)
 unsigned char* DataManager::ReadScriptFromIrrFS(const char* script_name, int* slen) {
-#ifdef _WIN32
+#ifdef _IRR_WCHAR_FILESYSTEM
 	wchar_t fname[256]{};
 	BufferIO::DecodeUTF8(script_name, fname);
 	auto reader = dataManager.FileSystem->createAndOpenFile(fname);

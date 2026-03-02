@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <sstream>
-#include "data_manager.h"
+#include "deck.h"
 
 #ifndef YGOPRO_MAX_DECK
 #define YGOPRO_MAX_DECK					60
@@ -43,28 +43,6 @@ struct LFList {
 	unsigned int hash{};
 	std::wstring listName;
 	std::unordered_map<uint32_t, int> content;
-};
-struct Deck {
-	std::vector<code_pointer> main;
-	std::vector<code_pointer> extra;
-	std::vector<code_pointer> side;
-	Deck() = default;
-	Deck(const Deck& ndeck) {
-		main = ndeck.main;
-		extra = ndeck.extra;
-		side = ndeck.side;
-	}
-	void clear() {
-		main.clear();
-		extra.clear();
-		side.clear();
-	}
-};
-
-struct DeckArray {
-	std::vector<uint32_t> main;
-	std::vector<uint32_t> extra;
-	std::vector<uint32_t> side;
 };
 
 class DeckManager {

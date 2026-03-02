@@ -1204,7 +1204,7 @@ void Game::LoadExpansions() {
 #endif // YGOPRO_SERVER_MODE
 #if defined(SERVER_ZIP_SUPPORT) || !defined(YGOPRO_SERVER_MODE)
 		if (IsExtension(name, L".zip") || IsExtension(name, L".ypk")) {
-#ifdef _WIN32
+#ifdef _IRR_WCHAR_FILESYSTEM
 			dataManager.FileSystem->addFileArchive(fpath, true, false, irr::io::EFAT_ZIP);
 #else
 			char upath[1024];
@@ -1219,7 +1219,7 @@ void Game::LoadExpansions() {
 	for(irr::u32 i = 0; i < dataManager.FileSystem->getFileArchiveCount(); ++i) {
 		auto archive = dataManager.FileSystem->getFileArchive(i)->getFileList();
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
-#ifdef _WIN32
+#ifdef _IRR_WCHAR_FILESYSTEM
 			const wchar_t* fname = archive->getFullFileName(j).c_str();
 #else
 			wchar_t fname[1024];
@@ -1232,7 +1232,7 @@ void Game::LoadExpansions() {
 			}
 #ifndef YGOPRO_SERVER_MODE
 			if (IsExtension(fname, L".conf")) {
-#ifdef _WIN32
+#ifdef _IRR_WCHAR_FILESYSTEM
 				auto reader = dataManager.FileSystem->createAndOpenFile(fname);
 #else
 				auto reader = dataManager.FileSystem->createAndOpenFile(uname);
