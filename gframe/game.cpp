@@ -78,7 +78,7 @@ void Game::MainServerLoop() {
 	dataManager.FileSystem = new irr::io::CFileSystem();
 #endif
 	deckManager.LoadLFList();
-	dataManager.LoadDB(L"cards.cdb");
+	dataManager.LoadDB("cards.cdb");
 	LoadExpansions();
 #ifdef SERVER_PRO2_SUPPORT
 	dataManager.FileSystem->addFileArchive("data/script.zip", true, false, irr::io::EFAT_ZIP);
@@ -121,7 +121,7 @@ bool Game::Initialize() {
 		return false;
 	}
 	dataManager.FileSystem = device->getFileSystem();
-	if(!dataManager.LoadDB(L"cards.cdb")) {
+	if(!dataManager.LoadDB("cards.cdb")) {
 		ErrorLog("Failed to load card database (cards.cdb)!");
 		return false;
 	}
@@ -1175,42 +1175,34 @@ std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cW
 #endif //YGOPRO_SERVER_MODE
 void Game::LoadExpansions() {
 #ifdef SERVER_PRO2_SUPPORT
-	FileSystem::TraversalDir(L"./cdb", [](const wchar_t* name, bool isdir) {
+	FileSystem::TraversalDir("./cdb", [](const char* name, bool isdir) {
 		if (isdir)
 			return;
-		wchar_t fpath[1024];
-		myswprintf(fpath, L"./cdb/%ls", name);
-		if(IsExtension(name, L".cdb")) {
+		char fpath[1024];
+		mysnprintf(fpath, "./cdb/%s", name);
+		if(IsExtension(name, ".cdb")) {
 			dataManager.LoadDB(fpath);
 		}
 	});
 #endif // SERVER_PRO2_SUPPORT
-	FileSystem::TraversalDir(L"./expansions", [](const wchar_t* name, bool isdir) {
+	FileSystem::TraversalDir("./expansions", [](const char* name, bool isdir) {
 		if (isdir)
 			return;
-		wchar_t fpath[1024];
-		myswprintf(fpath, L"./expansions/%ls", name);
-		if (IsExtension(name, L".cdb")) {
+		char fpath[1024];
+		mysnprintf(fpath, "./expansions/%s", name);
+		if (IsExtension(name, ".cdb")) {
 			dataManager.LoadDB(fpath);
 			return;
 		}
 #ifndef YGOPRO_SERVER_MODE
-		if (IsExtension(name, L".conf")) {
-			char upath[1024];
-			BufferIO::EncodeUTF8(fpath, upath);
-			dataManager.LoadStrings(upath);
+		if (IsExtension(name, ".conf")) {
+			dataManager.LoadStrings(fpath);
 			return;
 		}
 #endif // YGOPRO_SERVER_MODE
 #if defined(SERVER_ZIP_SUPPORT) || !defined(YGOPRO_SERVER_MODE)
-		if (IsExtension(name, L".zip") || IsExtension(name, L".ypk")) {
-#ifdef _IRR_WCHAR_FILESYSTEM
+		if (IsExtension(name, ".zip") || IsExtension(name, ".ypk")) {
 			dataManager.FileSystem->addFileArchive(fpath, true, false, irr::io::EFAT_ZIP);
-#else
-			char upath[1024];
-			BufferIO::EncodeUTF8(fpath, upath);
-			dataManager.FileSystem->addFileArchive(upath, true, false, irr::io::EFAT_ZIP);
-#endif
 			return;
 		}
 #endif //SERVER_ZIP_SUPPORT
@@ -1219,28 +1211,20 @@ void Game::LoadExpansions() {
 	for(irr::u32 i = 0; i < dataManager.FileSystem->getFileArchiveCount(); ++i) {
 		auto archive = dataManager.FileSystem->getFileArchive(i)->getFileList();
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
-#ifdef _IRR_WCHAR_FILESYSTEM
-			const wchar_t* fname = archive->getFullFileName(j).c_str();
-#else
-			wchar_t fname[1024];
-			const char* uname = archive->getFullFileName(j).c_str();
-			BufferIO::DecodeUTF8(uname, fname);
-#endif
-			if (IsExtension(fname, L".cdb")) {
-				dataManager.LoadDB(fname);
+			const char* name = archive->getFullFileName(j).c_str();
+			if (IsExtension(name, ".cdb")) {
+				dataManager.LoadDB(name);
 				continue;
 			}
 #ifndef YGOPRO_SERVER_MODE
-			if (IsExtension(fname, L".conf")) {
-#ifdef _IRR_WCHAR_FILESYSTEM
-				auto reader = dataManager.FileSystem->createAndOpenFile(fname);
-#else
-				auto reader = dataManager.FileSystem->createAndOpenFile(uname);
-#endif
+			if (IsExtension(name, ".conf")) {
+				auto reader = dataManager.FileSystem->createAndOpenFile(name);
 				dataManager.LoadStrings(reader);
 				continue;
 			}
-			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
+			if (!mystrncasecmp(name, "pack/", 5) && IsExtension(name, ".ydk")) {
+				wchar_t fname[1024];
+				BufferIO::DecodeUTF8(name, fname);
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}

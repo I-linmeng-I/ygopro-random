@@ -87,9 +87,7 @@ bool DataManager::ReadDB(sqlite3* pDB) {
 	}
 	return true;
 }
-bool DataManager::LoadDB(const wchar_t* wfile) {
-	char file[256];
-	BufferIO::EncodeUTF8(wfile, file);
+bool DataManager::LoadDB(const char* file) {
 #if defined(YGOPRO_SERVER_MODE) && !defined(SERVER_ZIP_SUPPORT)
 	bool ret{};
 	sqlite3* pDB{};
@@ -99,11 +97,7 @@ bool DataManager::LoadDB(const wchar_t* wfile) {
 		ret = ReadDB(pDB);
 	sqlite3_close(pDB);
 #else
-#ifdef _IRR_WCHAR_FILESYSTEM
-	auto reader = FileSystem->createAndOpenFile(wfile);
-#else
 	auto reader = FileSystem->createAndOpenFile(file);
-#endif
 	if(reader == nullptr)
 		return false;
 	spmemvfs_db_t db;
@@ -449,13 +443,7 @@ unsigned char* DataManager::ScriptReaderEx(const char* script_path, int* slen) {
 }
 #if !defined(YGOPRO_SERVER_MODE) || defined(SERVER_ZIP_SUPPORT)
 unsigned char* DataManager::ReadScriptFromIrrFS(const char* script_name, int* slen) {
-#ifdef _IRR_WCHAR_FILESYSTEM
-	wchar_t fname[256]{};
-	BufferIO::DecodeUTF8(script_name, fname);
-	auto reader = dataManager.FileSystem->createAndOpenFile(fname);
-#else
 	auto reader = dataManager.FileSystem->createAndOpenFile(script_name);
-#endif
 	if (!reader)
 		return nullptr;
 	int size = reader->read(scriptBuffer, sizeof scriptBuffer);

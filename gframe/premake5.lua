@@ -105,7 +105,6 @@ end
 
     filter "system:windows"
         entrypoint "mainCRTStartup"
-        defines { "_IRR_WCHAR_FILESYSTEM" }
         files "ygopro.rc"
 if SERVER_PRO2_SUPPORT then
         targetname ("AI.Server")

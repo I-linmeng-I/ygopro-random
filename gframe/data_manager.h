@@ -65,7 +65,7 @@ class DataManager {
 public:
 	DataManager();
 	bool ReadDB(sqlite3* pDB);
-	bool LoadDB(const wchar_t* wfile);
+	bool LoadDB(const char* file);
 #ifndef YGOPRO_SERVER_MODE
 	bool LoadStrings(const char* file);
 	bool LoadStrings(irr::io::IReadFile* reader);
