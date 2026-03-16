@@ -1224,7 +1224,9 @@ void Game::LoadExpansions() {
 			}
 			if (!mystrncasecmp(name, "pack/", 5) && IsExtension(name, ".ydk")) {
 				wchar_t fname[1024];
-				BufferIO::DecodeUTF8(name, fname);
+				int len = BufferIO::DecodeUTF8(name, fname);
+				// TODO: zip file may contain non-UTF8 file name. DecodeUTF8 can't parse it and returns 0.
+				if (!len) continue;
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}
@@ -1589,10 +1591,7 @@ void Game::ShowCardInfo(int code, bool resize) {
 	imgCard->setImage(imageManager.GetTexture(code, true));
 	if (is_valid) {
 		auto& cd = cit->second;
-		if (is_alternative(cd.code,cd.alias))
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-		else
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.get_original_code()), cd.get_original_code());
 	}
 	else {
 		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
@@ -1606,8 +1605,8 @@ void Game::ShowCardInfo(int code, bool resize) {
 	if (is_valid && !gameConf.hide_setname) {
 		auto& cd = cit->second;
 		auto target = cit;
-		if (cd.alias && _datas.find(cd.alias) != _datas.end()) {
-			target = _datas.find(cd.alias);
+		if (cd.rule_code && _datas.count(cd.rule_code)) {
+			target = _datas.find(cd.rule_code);
 		}
 		if (target->second.setcode[0]) {
 			offset = 23;// *yScale;
