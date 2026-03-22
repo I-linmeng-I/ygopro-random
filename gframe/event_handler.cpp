@@ -1716,9 +1716,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		break;
 	}
 	case irr::EET_KEY_INPUT_EVENT: {
+		if (mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX))
+			break;
 		switch(event.KeyInput.Key) {
 		case irr::KEY_KEY_A: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->always_chain = event.KeyInput.PressedDown;
 				mainGame->ignore_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1727,7 +1729,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_S: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->ignore_chain = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1736,7 +1738,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_D: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->chain_when_avail = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->ignore_chain = false;
@@ -1752,70 +1754,48 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::KEY_F6:
 		case irr::KEY_F7:
 		case irr::KEY_F8: {
-			if(!event.KeyInput.PressedDown && !mainGame->dInfo.isReplay && mainGame->dInfo.player_type != 7 && mainGame->dInfo.isStarted
-					&& !mainGame->wCardDisplay->isVisible() && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
-				int loc_id = 0;
-				display_cards.clear();
-				switch(event.KeyInput.Key) {
-					case irr::KEY_F1:
-						if(cant_check_grave)
-							break;
-						loc_id = 1004;
-						for(auto it = grave[0].rbegin(); it != grave[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F2:
-						loc_id = 1005;
-						for(auto it = remove[0].rbegin(); it != remove[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F3:
-						loc_id = 1006;
-						for(auto it = extra[0].rbegin(); it != extra[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F4:
-						loc_id = 1007;
-						for(auto it = mzone[0].begin(); it != mzone[0].end(); ++it) {
-							if(*it) {
-								for(auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
-									display_cards.push_back(*oit);
-							}
-						}
-						break;
-					case irr::KEY_F5:
-						if(cant_check_grave)
-							break;
-						loc_id = 1004;
-						for(auto it = grave[1].rbegin(); it != grave[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F6:
-						loc_id = 1005;
-						for(auto it = remove[1].rbegin(); it != remove[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F7:
-						loc_id = 1006;
-						for(auto it = extra[1].rbegin(); it != extra[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F8:
-						loc_id = 1007;
-						for(auto it = mzone[1].begin(); it != mzone[1].end(); ++it) {
-							if(*it) {
-								for(auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
-									display_cards.push_back(*oit);
-							}
-						}
-						break;
+			if (event.KeyInput.PressedDown)
+				break;
+			if (!mainGame->dInfo.isStarted || mainGame->dInfo.isReplay || mainGame->dInfo.player_type == 7)
+				break;
+			if (mainGame->wCardDisplay->isVisible())
+				break;
+			int loc_id = 0;
+			static_assert(irr::KEY_F8 - irr::KEY_F1 == 7, "keycode F1-F8 must be consecutive");
+			int p = (event.KeyInput.Key >= irr::KEY_F5) ? 1 : 0;
+			int key_offset = (p == 1) ? (event.KeyInput.Key - irr::KEY_F5) : (event.KeyInput.Key - irr::KEY_F1);
+			display_cards.clear();
+			if (key_offset == 0) { // Grave
+				if (cant_check_grave)
+					break;
+				loc_id = 1004;
+				for (auto it = grave[p].rbegin(); it != grave[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 1) { // Remove
+				loc_id = 1005;
+				for (auto it = remove[p].rbegin(); it != remove[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 2) { // Extra
+				loc_id = 1006;
+				for (auto it = extra[p].rbegin(); it != extra[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 3) { // Overlay
+				loc_id = 1007;
+				for (auto it = mzone[p].begin(); it != mzone[p].end(); ++it) {
+					if (*it) {
+						for (auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
+							display_cards.push_back(*oit);
+					}
 				}
-				if(display_cards.size()) {
-					wchar_t formatBuffer[2048];
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(loc_id), display_cards.size());
-					mainGame->wCardDisplay->setText(formatBuffer);
-					ShowLocationCard();
-				}
+			}
+			if (loc_id && display_cards.size()) {
+				wchar_t formatBuffer[2048];
+				myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(loc_id), display_cards.size());
+				mainGame->wCardDisplay->setText(formatBuffer);
+				ShowLocationCard();
 			}
 			break;
 		}
