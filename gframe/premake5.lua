@@ -1,7 +1,4 @@
 include "lzma/."
-if (SERVER_ZIP_SUPPORT or not SERVER_MODE) then
-include "spmemvfs/."
-end
 
 project "ygopro"
 if SERVER_MODE then
@@ -40,7 +37,7 @@ else
 
     files { "*.cpp", "*.h" }
     includedirs { "../ocgcore" }
-    links { "ocgcore", "clzma", "cspmemvfs", LUA_LIB_NAME, "sqlite3", "irrlicht", "freetype", "event" }
+    links { "ocgcore", "clzma", LUA_LIB_NAME, "sqlite3", "irrlicht", "freetype", "event" }
 end
 
     if not BUILD_LUA then
@@ -60,6 +57,10 @@ end
     else
         includedirs { IRRLICHT_INCLUDE_DIR }
         libdirs { IRRLICHT_LIB_DIR }
+    end
+    if not IRRLICHT_BUILD_JPEG_PNG then
+        links { "jpeg", "png" }
+        libdirs { JPEG_LIB_DIR, PNG_LIB_DIR }
     end
 
     if BUILD_FREETYPE then
