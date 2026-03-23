@@ -1223,11 +1223,13 @@ void Game::LoadExpansions() {
 			const char* name = archive->getFullFileName(j).c_str();
 			if (IsExtension(name, ".cdb")) {
 				if (!dataManager.LoadDB(name)) {
+#ifndef YGOPRO_SERVER_MODE
 					std::string errmsg = "Warning: Failed to load DB file in expansion archive (";
 					errmsg.append(name);
 					errmsg.append(")! ");
 					errmsg.append(dataManager.errmsg);
 					mainGame->ErrorLog(errmsg.c_str());
+#endif
 				}
 				continue;
 			}
