@@ -1,7 +1,7 @@
 include "lzma/."
 
-project "ygopro"
 if SERVER_MODE then
+project "ygopro"
     kind "ConsoleApp"
     cppdialect "C++14"
 
@@ -19,7 +19,7 @@ if SERVER_MODE then
     links { "ocgcore", "clzma", LUA_LIB_NAME, "sqlite3", "event" }
     if SERVER_ZIP_SUPPORT then
         defines { "SERVER_ZIP_SUPPORT" }
-        links { "irrlicht", "cspmemvfs" }
+        links { "irrlicht" }
         if BUILD_IRRLICHT then
             includedirs { "../irrlicht/source/Irrlicht" }
         end
@@ -31,6 +31,7 @@ if SERVER_MODE then
         defines { "SERVER_TAG_SURRENDER_CONFIRM" }
     end
 else
+project "YGOPro"
     kind "WindowedApp"
     rtti "Off"
     openmp "On"
@@ -58,6 +59,8 @@ end
         includedirs { IRRLICHT_INCLUDE_DIR }
         libdirs { IRRLICHT_LIB_DIR }
     end
+
+if not SERVER_MODE then
     if not IRRLICHT_BUILD_JPEG_PNG then
         links { "jpeg", "png" }
         libdirs { JPEG_LIB_DIR, PNG_LIB_DIR }
@@ -69,6 +72,7 @@ end
         includedirs { FREETYPE_INCLUDE_DIR }
         libdirs { FREETYPE_LIB_DIR }
     end
+end
 
     if BUILD_SQLITE then
         includedirs { "../sqlite3" }
@@ -77,7 +81,8 @@ end
         libdirs { SQLITE_LIB_DIR }
     end
 
-    if USE_AUDIO and not SERVER_MODE then
+if not SERVER_MODE then
+    if USE_AUDIO then
         defines { "YGOPRO_USE_AUDIO" }
         if AUDIO_LIB == "miniaudio" then
             defines { "YGOPRO_USE_MINIAUDIO" }
@@ -103,6 +108,7 @@ end
             end
         end
     end
+end
 
     filter "system:windows"
         entrypoint "mainCRTStartup"
