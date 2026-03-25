@@ -144,13 +144,13 @@ public:
 #endif
 	//read by fread
 	static unsigned char* ReadScriptFromFile(const char* script_name, int* slen);
-
+	
 #ifndef YGOPRO_SERVER_MODE
-	static bool deck_sort_lv(code_pointer l1, code_pointer l2);
-	static bool deck_sort_atk(code_pointer l1, code_pointer l2);
-	static bool deck_sort_def(code_pointer l1, code_pointer l2);
-	static bool deck_sort_name(code_pointer l1, code_pointer l2);
-#endif
+	static bool deck_sort_lv(const CardDataC* l1, const CardDataC* l2);
+	static bool deck_sort_atk(const CardDataC* l1, const CardDataC* l2);
+	static bool deck_sort_def(const CardDataC* l1, const CardDataC* l2);
+	static bool deck_sort_name(const CardDataC* l1, const CardDataC* l2);
+#endif //YGOPRO_SERVER_MODE
 
 private:
 	const wchar_t* GetMapString(const wstring_map& table, uint32_t code) const;
