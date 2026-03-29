@@ -173,7 +173,9 @@ public:
 	void RefreshReplay();
 	void RefreshSingleplay();
 	void RefreshBot();
-	void DrawSelectionLine(irr::video::S3DVertex* vec, bool strip, int width, float* cv);
+	void Draw2DImageQuad(irr::video::IVideoDriver* driver, irr::video::ITexture* texture, const irr::core::recti& sourceRect,
+						 const irr::core::vector2di corner[4], bool useAlphaChannel = true, irr::video::SColor color = 0xffffffff);
+	void DrawSelectionLine(irr::video::S3DVertex* vec, bool stipple, irr::video::SColor color);
 	void DrawSelectionLine(irr::gui::IGUIElement* element, int width, irr::video::SColor color);
 	void DrawBackGround();
 	void DrawLinkedZones(ClientCard* pcard);
@@ -188,6 +190,7 @@ public:
 	void ShowElement(irr::gui::IGUIElement* element, int autoframe = 0);
 	void HideElement(irr::gui::IGUIElement* element, bool set_action = false);
 	void PopupElement(irr::gui::IGUIElement* element, int hideframe = 0);
+	void SetImageButtonDrawing(irr::gui::IGUIElement* element, bool draw = true);
 	void WaitFrameSignal(int frame);
 	void DrawThumb(const CardDataC* cp, irr::core::vector2di pos, const LFList* lflist, bool drag = false);
 	void DrawDeckBd();
@@ -263,8 +266,8 @@ public:
 	bool hideChat{};
 	int chatTiming[8]{};
 	int chatType[8]{};
-	unsigned short linePatternD3D{};
-	unsigned short linePatternGL{ 0x0f0f };
+	unsigned short linePattern{ 0 };
+	unsigned short stippleMask{ 0x0f0f };
 	int waitFrame{};
 	int signalFrame{};
 	int actionParam{};
