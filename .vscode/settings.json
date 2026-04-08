@@ -4,6 +4,7 @@
         "deque": "cpp",
         "format": "cpp",
         "list": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "xtree": "cpp"
     }
 }
