@@ -6,7 +6,7 @@
 --          Don't build event, freetype, sqlite, opus, vorbis on Linux or MacOS, use apt or homebrew,
 --          but build them on Windows, due to the lack of package manager on Windows.
 
-BUILD_LUA = false
+BUILD_LUA = true
 BUILD_EVENT = os.istarget("windows")
 
 BUILD_FREETYPE = os.istarget("windows")

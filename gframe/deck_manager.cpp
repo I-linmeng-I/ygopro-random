@@ -203,44 +203,44 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 
 	deck.clear();
 	int errorcode = 0;
-
+    auto& _datas = dataManager.GetDataTable();
 	// 加载主卡组
 	for (int i = 0; i < mainDeckSize; ++i)
 	{
 		auto code = mainCodes[i];
-		CardData cd;
-		if (!dataManager.GetData(code, &cd))
-		{
-			errorcode = code;
-			continue;
-		}
-		deck.main.push_back(dataManager.GetCodePointer(code));
+        auto it = _datas.find(code);
+        if (it == _datas.end())
+        {
+            errorcode = code;
+            continue;
+        }
+		deck.main.push_back(&it->second);
 	}
 
 	// 加载额外卡组
 	for (int i = 0; i < extraDeckSize; ++i)
 	{
 		auto code = extraCodes[i];
-		CardData cd;
-		if (!dataManager.GetData(code, &cd))
+		auto it = _datas.find(code);
+		if (it == _datas.end())
 		{
 			errorcode = code;
 			continue;
 		}
-		deck.extra.push_back(dataManager.GetCodePointer(code));
+		deck.extra.push_back(&it->second);
 	}
 
 	// 加载副卡组
 	for (int i = 0; i < sideDeckSize; ++i)
 	{
 		auto code = sideCodes[i];
-		CardData cd;
-		if (!dataManager.GetData(code, &cd))
+		auto it = _datas.find(code);
+		if (it == _datas.end())
 		{
 			errorcode = code;
 			continue;
 		}
-		deck.side.push_back(dataManager.GetCodePointer(code));
+		deck.side.push_back(&it->second);
 	}
 
 	// 加入规则卡
@@ -278,7 +278,11 @@ uint32_t DeckManager::LoadDeck(Deck& deck, uint32_t dbuf[], int mainc, int sidec
 			// 输出转换后的数字
 			for (long num : numbers)
 			{
-				deck.main.push_back(dataManager.GetCodePointer(num));
+				auto it = _datas.find(num);
+				if (it != _datas.end())
+				{
+					deck.main.push_back(&it->second);
+				}
 			}
 		}
 	}
