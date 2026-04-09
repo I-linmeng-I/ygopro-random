@@ -17,11 +17,11 @@ mat_common:
     - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/lua-5.4.7.tar.gz | tar zfx -
     - mv lua-5.4.7 lua
     # sqlite3
-    - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/sqlite-autoconf-3490100.tar.gz | tar zfx -
-    - mv sqlite-autoconf-3490100 sqlite3
+    - wget -O - https://mat-cacher.moenext.com/https://www.sqlite.org/2026/sqlite-autoconf-3510300.tar.gz | tar zfx -
+    - mv sqlite-autoconf-3510300 sqlite3
     # freetype
-    #- wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/freetype-2.13.3.tar.gz | tar zfx -
-    #- mv freetype-2.13.3 freetype
+    #- wget -O - https://mat-cacher.moenext.com/https://downloads.sourceforge.net/freetype/freetype-2.14.2.tar.gz | tar zfx -
+    #- mv freetype-2.14.2 freetype
     # event
     - wget -O - https://cdn02.moecube.com:444/ygopro-build-materials/libevent-2.1.12-stable.tar.gz | tar zfx -
     - mv libevent-2.1.12-stable event
@@ -93,7 +93,8 @@ mat_windows:
 
 ._exec_build:
   stage: build
-  #variables:
+  variables:
+    GIT_STRATEGY: 'clone'
   #  NO_LUA_SAFE: '1' # on client no lua safe
   #cache:
   #  key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"

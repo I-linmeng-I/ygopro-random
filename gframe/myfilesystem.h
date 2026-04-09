@@ -8,20 +8,23 @@
 #ifndef _WIN32
 #include <dirent.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <vector>
 #include <algorithm>
+#include <string>
 #endif
 
 #ifdef _WIN32
 
 #define NOMINMAX
 #include <Windows.h>
+#include <shellapi.h>
 
 class FileSystem {
 public:
 	static void SafeFileName(wchar_t* wfile) {
 		while((wfile = std::wcspbrk(wfile, L"<>:\"/\\|?*")) != nullptr)
-			*wfile++ = '_';
+			*wfile++ = L'_';
 	}
 
 	static bool IsFileExists(const wchar_t* wfile) {
@@ -69,13 +72,18 @@ public:
 	}
 
 	static bool DeleteDir(const wchar_t* wdir) {
-		wchar_t pdir[256];
+		size_t len = std::wcslen(wdir);
+		wchar_t pdir[1024 + 1]{};
+		if(len >= 1024)
+			return false;
 		BufferIO::CopyWideString(wdir, pdir);
+		// pFrom must be double-null terminated for SHFileOperationW
+		// pdir[len] is already '\0' and pdir[len+1] is '\0' due to zero-init
 		SHFILEOPSTRUCTW lpFileOp{};
 		lpFileOp.hwnd = nullptr;
 		lpFileOp.wFunc = FO_DELETE;
 		lpFileOp.pFrom = pdir;
-		lpFileOp.pTo = 0;
+		lpFileOp.pTo = nullptr;
 		lpFileOp.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT;
 		return SHFileOperationW(&lpFileOp) == 0;
 	}
@@ -125,7 +133,7 @@ class FileSystem {
 public:
 	static void SafeFileName(wchar_t* wfile) {
 		while((wfile = std::wcspbrk(wfile, L"/")) != nullptr)
-			*wfile++ = '_';
+			*wfile++ = L'_';
 	}
 
 	static bool IsFileExists(const char* file) {
@@ -182,7 +190,7 @@ public:
 		bool success = true;
 		TraversalDir(dir, [dir, &success](const char *name, bool isdir) {
 			char full_path[1024];
-			int len = std::snprintf(full_path, sizeof full_path, "%s/%s", dir, name);
+			int len = std::snprintf(full_path, sizeof(full_path), "%s/%s", dir, name);
 			if (len < 0 || len >= (int)(sizeof full_path)) {
 				success = false;
 				return;
@@ -234,10 +242,11 @@ public:
 			file_unit funit;
 #endif
 			char fname[1024];
-			int len = std::snprintf(fname, sizeof fname, "%s/%s", path, dirp->d_name);
+			int len = std::snprintf(fname, sizeof(fname), "%s/%s", path, dirp->d_name);
 			if (len < 0 || len >= (int)(sizeof fname))
 				continue;
-			stat(fname, &fileStat);
+			if (stat(fname, &fileStat) != 0)
+				continue;
 #ifdef YGOPRO_SERVER_MODE
 			bool is_dir = S_ISDIR(fileStat.st_mode);
 			if (is_dir && (strcmp(dirp->d_name, ".") == 0 || strcmp(dirp->d_name, "..") == 0) || strcmp(dirp->d_name, ".git") == 0)

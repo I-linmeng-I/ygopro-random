@@ -11,6 +11,10 @@
 #include "base64.h"
 #endif
 
+#if defined(_WIN32) && (!defined(WDK_NTDDI_VERSION) || (WDK_NTDDI_VERSION < 0x0A000005)) // Redstone 4, Version 1803, Build 17134.
+#error "This program requires the Windows 10 SDK version 1803 or above to compile on Windows. Otherwise, non-ASCII characters will not be displayed or processed correctly."
+#endif
+
 unsigned int enable_log = 0x3;
 #ifndef YGOPRO_SERVER_MODE
 bool exit_on_return = false;
@@ -28,11 +32,11 @@ void ClickButton(irr::gui::IGUIElement* btn) {
 #endif //YGOPRO_SERVER_MODE
 
 int main(int argc, char* argv[]) {
-#if defined(FOPEN_WINDOWS_SUPPORT_UTF8)
+#if defined(_WIN32)
 	std::setlocale(LC_CTYPE, ".UTF-8");
 #elif defined(__APPLE__)
 	std::setlocale(LC_CTYPE, "UTF-8");
-#elif !defined(_WIN32)
+#else
 	std::setlocale(LC_CTYPE, "");
 #endif
 #if defined __APPLE__ && !defined YGOPRO_SERVER_MODE
@@ -83,7 +87,7 @@ int main(int argc, char* argv[]) {
 	ygo::game_info.draw_count = 1;
 	ygo::game_info.no_check_deck = false;
 	ygo::game_info.no_shuffle_deck = false;
-	ygo::game_info.duel_rule = DEFAULT_DUEL_RULE;
+	ygo::game_info.duel_rule = ygo::DEFAULT_DUEL_RULE;
 	ygo::game_info.time_limit = 180;
 	std::memset(ygo::pre_seed, 0, sizeof(ygo::pre_seed));
 	std::memset(ygo::pre_seed_specified, 0, sizeof(ygo::pre_seed_specified));
@@ -99,15 +103,15 @@ int main(int argc, char* argv[]) {
 			mode = 0;
 		ygo::game_info.mode = mode;
 		if(argv[5][0] == 'T')
-			ygo::game_info.duel_rule = DEFAULT_DUEL_RULE - 1;
+			ygo::game_info.duel_rule = ygo::DEFAULT_DUEL_RULE - 1;
 		else if(argv[5][0] == 'F')
-			ygo::game_info.duel_rule = DEFAULT_DUEL_RULE;
+			ygo::game_info.duel_rule = ygo::DEFAULT_DUEL_RULE;
 		else {
 			int master_rule = atoi(argv[5]);
 			if(master_rule)
 				ygo::game_info.duel_rule = master_rule;
 			else
-				ygo::game_info.duel_rule = DEFAULT_DUEL_RULE;
+				ygo::game_info.duel_rule = ygo::DEFAULT_DUEL_RULE;
 		}
 		if(argv[6][0] == 'T')
 			ygo::game_info.no_check_deck = true;
@@ -189,13 +193,17 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		if(wargv[i][0] == L'-' && wargv[i][1] == L'e' && wargv[i][2] != L'\0') {
-			ygo::dataManager.LoadDB(&wargv[i][2]);
+			char file[1024];
+			BufferIO::EncodeUTF8(wargv[i] + 2, file);
+			ygo::dataManager.LoadDB(file);
 			continue;
 		}
 		if(!std::wcscmp(wargv[i], L"-e")) { // extra database
 			++i;
 			if(i < wargc) {
-				ygo::dataManager.LoadDB(wargv[i]);
+				char file[1024];
+				BufferIO::EncodeUTF8(wargv[i], file);
+				ygo::dataManager.LoadDB(file);
 			}
 			continue;
 		} else if(!std::wcscmp(wargv[i], L"-n")) { // nickName

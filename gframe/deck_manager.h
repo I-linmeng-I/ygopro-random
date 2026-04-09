@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <sstream>
-#include "data_manager.h"
+#include "deck.h"
 
 #ifndef YGOPRO_MAX_DECK
 #define YGOPRO_MAX_DECK					60
@@ -23,47 +23,37 @@
 #endif
 
 namespace ygo {
-	constexpr int DECK_MAX_SIZE = YGOPRO_MAX_DECK;
-	constexpr int DECK_MIN_SIZE = YGOPRO_MIN_DECK;
-	constexpr int EXTRA_MAX_SIZE = YGOPRO_MAX_EXTRA;
-	constexpr int SIDE_MAX_SIZE = YGOPRO_MAX_SIDE;
-	constexpr int PACK_MAX_SIZE = 1000;
+
+constexpr int DECK_MAX_SIZE = YGOPRO_MAX_DECK;
+constexpr int DECK_MIN_SIZE = YGOPRO_MIN_DECK;
+constexpr int EXTRA_MAX_SIZE = YGOPRO_MAX_EXTRA;
+constexpr int SIDE_MAX_SIZE = YGOPRO_MAX_SIDE;
+constexpr int PACK_MAX_SIZE = 1000;
+
+constexpr int MAINC_MAX = 250;	// the limit of card_state
+constexpr int SIDEC_MAX = MAINC_MAX;
+
+constexpr int DECK_CATEGORY_PACK = 0;
+constexpr int DECK_CATEGORY_BOT = 1;
+constexpr int DECK_CATEGORY_NONE = 2;
+constexpr int DECK_CATEGORY_SEPARATOR = 3;
+constexpr int DECK_CATEGORY_CUSTOM = 4;
 
 struct LFList {
 	unsigned int hash{};
 	std::wstring listName;
-	std::unordered_map<unsigned int, int> content;
-};
-struct Deck {
-	std::vector<code_pointer> main;
-	std::vector<code_pointer> extra;
-	std::vector<code_pointer> side;
-	Deck() = default;
-	Deck(const Deck& ndeck) {
-		main = ndeck.main;
-		extra = ndeck.extra;
-		side = ndeck.side;
-	}
-	void clear() {
-		main.clear();
-		extra.clear();
-		side.clear();
-	}
-};
-
-struct DeckArray {
-	std::vector<uint32_t> main;
-	std::vector<uint32_t> extra;
-	std::vector<uint32_t> side;
+	std::unordered_map<uint32_t, int> content;
 };
 
 class DeckManager {
 public:
+#ifndef YGOPRO_SERVER_MODE
 	Deck current_deck;
+#endif
 	std::vector<LFList> _lfList;
 
 #ifndef YGOPRO_SERVER_MODE
-	static char deckBuffer[0x10000];
+	static constexpr int MAX_YDK_SIZE = 0x10000;
 #endif
 
 	void LoadLFListSingle(const char* path);

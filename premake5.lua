@@ -14,6 +14,7 @@ BUILD_FREETYPE = os.istarget("windows")
 BUILD_SQLITE = os.istarget("windows")
 
 BUILD_IRRLICHT = true -- modified Irrlicht is required, can't use the official one
+IRRLICHT_BUILD_JPEG_PNG = os.istarget("windows") -- build the bundled jpeglib and libpng from Irrlicht
 USE_DXSDK = true
 
 USE_AUDIO = true
@@ -58,6 +59,12 @@ newoption { trigger = "build-irrlicht", category = "YGOPro - irrlicht", descript
 newoption { trigger = "no-build-irrlicht", category = "YGOPro - irrlicht", description = "" }
 newoption { trigger = "irrlicht-include-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
 newoption { trigger = "irrlicht-lib-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
+newoption { trigger = "build-jpeg-png", category = "YGOPro - irrlicht", description = "" }
+newoption { trigger = "no-build-jpeg-png", category = "YGOPro - irrlicht", description = "" }
+newoption { trigger = "jpeg-include-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
+newoption { trigger = "jpeg-lib-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
+newoption { trigger = "png-include-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
+newoption { trigger = "png-lib-dir", category = "YGOPro - irrlicht", description = "", value = "PATH" }
 newoption { trigger = "no-dxsdk", category = "YGOPro - irrlicht", description = "" }
 
 newoption { trigger = "no-audio", category = "YGOPro", description = "" }
@@ -87,7 +94,6 @@ newoption { trigger = "irrklang-pro-release-lib-dir", category = "YGOPro - irrkl
 newoption { trigger = "irrklang-pro-debug-lib-dir", category = "YGOPro - irrklang - pro", description = "", value = "PATH" }
 newoption { trigger = 'build-ikpmp3', category = "YGOPro - irrklang - ikpmp3", description = "" }
 
-newoption { trigger = "winxp-support", category = "YGOPro", description = "" }
 newoption { trigger = "mac-arm", category = "YGOPro", description = "Compile for Apple Silicon Mac" }
 newoption { trigger = "mac-intel", category = "YGOPro", description = "Compile for Intel Mac" }
 
@@ -229,13 +235,24 @@ if not BUILD_IRRLICHT then
     IRRLICHT_INCLUDE_DIR = GetParam("irrlicht-include-dir") or os.findheader("irrlicht.h")
     IRRLICHT_LIB_DIR = GetParam("irrlicht-lib-dir") or os.findlib("irrlicht")
 end
+if GetParam("no-build-jpeg-png") then
+    IRRLICHT_BUILD_JPEG_PNG = false
+elseif GetParam("build-jpeg-png") then
+    IRRLICHT_BUILD_JPEG_PNG = true
+end
+if not IRRLICHT_BUILD_JPEG_PNG then
+    JPEG_INCLUDE_DIR = GetParam("jpeg-include-dir") or os.findheader("jpeglib.h")
+    JPEG_LIB_DIR = GetParam("jpeg-lib-dir") or os.findlib("jpeg")
+    PNG_INCLUDE_DIR = GetParam("png-include-dir") or os.findheader("png.h")
+    PNG_LIB_DIR = GetParam("png-lib-dir") or os.findlib("png")
+end
 
 if GetParam("no-dxsdk") then
     USE_DXSDK = false
 end
 if USE_DXSDK and os.istarget("windows") then
     if not os.getenv("DXSDK_DIR") then
-        print("DXSDK_DIR environment variable not set, it seems you don't have the DirectX SDK installed. DirectX mode will be disabled.")
+        print("Warning: DXSDK_DIR environment variable not set, it seems you don't have the DirectX SDK installed. DirectX mode will be disabled.")
         USE_DXSDK = false
     end
 end
@@ -311,10 +328,6 @@ if USE_AUDIO and not SERVER_MODE then
     end
 end
 
-if GetParam("winxp-support") and os.istarget("windows") then
-    WINXP_SUPPORT = true
-end
-
 if os.istarget("macosx") then
     if GetParam("mac-arm") then
         MAC_ARM = true
@@ -346,12 +359,7 @@ workspace "YGOPro"
     filter "system:windows"
         systemversion "latest"
         startproject "YGOPro"
-        if WINXP_SUPPORT then
-            defines { "WINVER=0x0501" }
-            toolset "v141_xp"
-        else
-            defines { "WINVER=0x0601" } -- WIN7
-        end
+        defines { "WINVER=0x0601" } -- WIN7
         platforms { "Win32", "x64" }
 
     filter { "system:windows", "platforms:Win32" }
@@ -409,9 +417,7 @@ workspace "YGOPro"
 
     filter "action:vs*"
         cdialect "C11"
-        if not WINXP_SUPPORT then
-           conformancemode "On" 
-        end
+        conformancemode "On" 
         vectorextensions "SSE2"
         buildoptions { "/utf-8" }
         defines { "_CRT_SECURE_NO_WARNINGS" }

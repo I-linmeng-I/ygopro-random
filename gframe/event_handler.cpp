@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "event_handler.h"
 #include "client_field.h"
 #include "network.h"
@@ -404,7 +405,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					}
 				} else {
 					selectable_cards.clear();
-					conti_selecting = false;
+					bool is_continuous = false;
 					switch(command_location) {
 					case LOCATION_DECK: {
 						for(size_t i = 0; i < deck[command_controler].size(); ++i)
@@ -431,15 +432,15 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						break;
 					}
 					case POSITION_HINT: {
+						is_continuous = true;
 						selectable_cards = conti_cards;
 						std::sort(selectable_cards.begin(), selectable_cards.end());
 						auto eit = std::unique(selectable_cards.begin(), selectable_cards.end());
 						selectable_cards.erase(eit, selectable_cards.end());
-						conti_selecting = true;
 						break;
 					}
 					}
-					if(!conti_selecting) {
+					if (!is_continuous) {
 						mainGame->wCardSelect->setText(dataManager.GetSysString(566));
 						list_command = COMMAND_ACTIVATE;
 					} else {
@@ -447,7 +448,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						list_command = COMMAND_OPERATION;
 					}
 					std::sort(selectable_cards.begin(), selectable_cards.end(), ClientCard::client_card_sort);
-					ShowSelectCard(true, true);
+					ShowSelectCard(true, is_continuous);
 				}
 				break;
 			}
@@ -567,32 +568,32 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				switch(command_location) {
 				case LOCATION_DECK: {
 					selectable_cards.assign(deck[command_controler].rbegin(), deck[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1000), deck[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1000), deck[command_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_MZONE: {
 					ClientCard* pcard = mzone[command_controler][command_sequence];
 					selectable_cards.assign(pcard->overlayed.begin(), pcard->overlayed.end());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), pcard->overlayed.size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1007), pcard->overlayed.size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_GRAVE: {
 					selectable_cards.assign(grave[command_controler].rbegin(), grave[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1004), grave[command_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_REMOVED: {
 					selectable_cards.assign(remove[command_controler].rbegin(), remove[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1005), remove[command_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
 				case LOCATION_EXTRA: {
 					selectable_cards.assign(extra[command_controler].rbegin(), extra[command_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[command_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1006), extra[command_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -892,7 +893,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					// image
 					if(selectable_cards[i + pos]->code)
 						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->code));
-					else if(conti_selecting)
+					else if(select_continuous)
 						mainGame->btnCardSelect[i]->setImage(imageManager.GetTexture(selectable_cards[i + pos]->chain_code));
 					else
 						mainGame->btnCardSelect[i]->setImage(imageManager.tCover[selectable_cards[i + pos]->controler + 2]);
@@ -905,21 +906,19 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						else
 							myswprintf(formatBuffer, L"");
 					} else {
-						if(conti_selecting)
-							myswprintf(formatBuffer, L"%ls", DataManager::unknown_string);
-						else if(cant_check_grave && selectable_cards[i]->location == LOCATION_GRAVE)
-							myswprintf(formatBuffer, L"%ls", dataManager.FormatLocation(selectable_cards[i]->location, 0));
-						else if(selectable_cards[i + pos]->location == LOCATION_OVERLAY)
+						if (select_continuous)
+							myswprintf(formatBuffer, L"%ls", dataManager.unknown_string);
+						else if (cant_check_grave && selectable_cards[i + pos]->location == LOCATION_GRAVE)
+							myswprintf(formatBuffer, L"%ls", dataManager.FormatLocation(selectable_cards[i + pos]->location, 0));
+						else if (selectable_cards[i + pos]->location == LOCATION_OVERLAY)
 							myswprintf(formatBuffer, L"%ls[%d](%d)",
-								dataManager.FormatLocation(selectable_cards[i + pos]->overlayTarget->location, selectable_cards[i + pos]->overlayTarget->sequence),
-								selectable_cards[i + pos]->overlayTarget->sequence + 1, selectable_cards[i + pos]->sequence + 1);
+								dataManager.FormatLocation(selectable_cards[i + pos]->overlayTarget), selectable_cards[i + pos]->overlayTarget->sequence + 1, selectable_cards[i + pos]->sequence + 1);
 						else
-							myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(selectable_cards[i + pos]->location, selectable_cards[i + pos]->sequence),
-								selectable_cards[i + pos]->sequence + 1);
+							myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(selectable_cards[i + pos]), selectable_cards[i + pos]->sequence + 1);
 					}
 					mainGame->stCardPos[i]->setText(formatBuffer);
 					// color
-					if(conti_selecting)
+					if(select_continuous)
 						mainGame->stCardPos[i]->setBackgroundColor(0xffffffff);
 					else if(selectable_cards[i + pos]->location == LOCATION_OVERLAY) {
 						if(selectable_cards[i + pos]->owner != selectable_cards[i + pos]->overlayTarget->controler)
@@ -961,13 +960,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 						mainGame->btnCardDisplay[i]->setImage(imageManager.tCover[display_cards[i + pos]->controler + 2]);
 					mainGame->btnCardDisplay[i]->setRelativePosition(irr::core::rect<irr::s32>(30 + i * 125, 55, 30 + 120 + i * 125, 225));
 					wchar_t formatBuffer[2048];
-					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
-							myswprintf(formatBuffer, L"%ls[%d](%d)",
-								dataManager.FormatLocation(display_cards[i + pos]->overlayTarget->location, display_cards[i + pos]->overlayTarget->sequence),
-								display_cards[i + pos]->overlayTarget->sequence + 1, display_cards[i + pos]->sequence + 1);
-					} else
-						myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(display_cards[i + pos]->location, display_cards[i + pos]->sequence),
-							display_cards[i + pos]->sequence + 1);
+					if(display_cards[i + pos]->location == LOCATION_OVERLAY)
+						myswprintf(formatBuffer, L"%ls[%d](%d)",
+							dataManager.FormatLocation(display_cards[i + pos]->overlayTarget), display_cards[i + pos]->overlayTarget->sequence + 1, display_cards[i + pos]->sequence + 1);
+					else
+						myswprintf(formatBuffer, L"%ls[%d]", dataManager.FormatLocation(display_cards[i + pos]), display_cards[i + pos]->sequence + 1);
 					mainGame->stDisplayPos[i]->setText(formatBuffer);
 					if(display_cards[i + pos]->location == LOCATION_OVERLAY) {
 						if(display_cards[i + pos]->owner != display_cards[i + pos]->overlayTarget->controler)
@@ -1105,7 +1102,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(deck[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(deck[hovered_controler].rbegin(), deck[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1000), deck[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1000), deck[hovered_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1113,7 +1110,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(!clicked_card || clicked_card->overlayed.size() == 0)
 						break;
 					selectable_cards.assign(clicked_card->overlayed.begin(), clicked_card->overlayed.end());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1121,7 +1118,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(grave[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(grave[hovered_controler].rbegin(), grave[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1004), grave[hovered_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1129,7 +1126,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(remove[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(remove[hovered_controler].rbegin(), remove[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1005), remove[hovered_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1137,7 +1134,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(extra[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(extra[hovered_controler].rbegin(), extra[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1006), extra[hovered_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1155,7 +1152,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(!clicked_card || clicked_card->overlayed.size() == 0)
 						break;
 					selectable_cards.assign(clicked_card->overlayed.begin(), clicked_card->overlayed.end());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1007), clicked_card->overlayed.size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1163,7 +1160,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if(grave[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(grave[hovered_controler].rbegin(), grave[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1004), grave[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1004), grave[hovered_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1171,7 +1168,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if (remove[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(remove[hovered_controler].rbegin(), remove[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1005), remove[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1005), remove[hovered_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1179,7 +1176,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 					if (extra[hovered_controler].size() == 0)
 						break;
 					selectable_cards.assign(extra[hovered_controler].rbegin(), extra[hovered_controler].rend());
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(1006), extra[hovered_controler].size());
+					myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(1006), extra[hovered_controler].size());
 					mainGame->wCardSelect->setText(formatBuffer);
 					break;
 				}
@@ -1540,7 +1537,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 				} else {
 					if(mainGame->Resize(327, 8, 630, 51).isPointInside(mousepos))
 						mplayer = 0;
-					else if(mainGame->Resize(689, 8, 991, 51).isPointInside(mousepos))
+					else if(mainGame->Resize(689, 8, 992, 51).isPointInside(mousepos))
 						mplayer = 1;
 				}
 			}
@@ -1597,7 +1594,9 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 									myswprintf(formatBuffer, L"\nLINK-%d", mcard->link);
 									str.append(formatBuffer);
 								}
-								myswprintf(formatBuffer, L" %ls/%ls", dataManager.FormatRace(mcard->race).c_str(), dataManager.FormatAttribute(mcard->attribute).c_str());
+								const auto& race = dataManager.FormatRace(mcard->race);
+								const auto& attribute = dataManager.FormatAttribute(mcard->attribute);
+								myswprintf(formatBuffer, L" %ls/%ls", race.c_str(), attribute.c_str());
 								str.append(formatBuffer);
 								if(mcard->location == LOCATION_HAND && (mcard->type & TYPE_PENDULUM)) {
 									myswprintf(formatBuffer, L"\n%d/%d", mcard->lscale, mcard->rscale);
@@ -1622,10 +1621,14 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 									myswprintf(formatBuffer, L"\n%ls%d", dataManager.GetSysString(211), mcard->chValue);
 								else if(mcard->cHint == CHINT_CARD)
 									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(212), dataManager.GetName(mcard->chValue));
-								else if(mcard->cHint == CHINT_RACE)
-									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(213), dataManager.FormatRace(mcard->chValue).c_str());
-								else if(mcard->cHint == CHINT_ATTRIBUTE)
-									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(214), dataManager.FormatAttribute(mcard->chValue).c_str());
+								else if(mcard->cHint == CHINT_RACE) {
+									const auto& race = dataManager.FormatRace(mcard->chValue);
+									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(213), race.c_str());
+								}
+								else if(mcard->cHint == CHINT_ATTRIBUTE) {
+									const auto& attribute = dataManager.FormatAttribute(mcard->chValue);
+									myswprintf(formatBuffer, L"\n%ls%ls", dataManager.GetSysString(214), attribute.c_str());
+								}
 								else if(mcard->cHint == CHINT_NUMBER)
 									myswprintf(formatBuffer, L"\n%ls%d", dataManager.GetSysString(215), mcard->chValue);
 								str.append(formatBuffer);
@@ -1714,9 +1717,11 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		break;
 	}
 	case irr::EET_KEY_INPUT_EVENT: {
+		if (mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX))
+			break;
 		switch(event.KeyInput.Key) {
 		case irr::KEY_KEY_A: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->always_chain = event.KeyInput.PressedDown;
 				mainGame->ignore_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1725,7 +1730,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_S: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->ignore_chain = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->chain_when_avail = false;
@@ -1734,7 +1739,7 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 			break;
 		}
 		case irr::KEY_KEY_D: {
-			if(mainGame->gameConf.control_mode == 0 && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
+			if(mainGame->gameConf.control_mode == 0) {
 				mainGame->chain_when_avail = event.KeyInput.PressedDown;
 				mainGame->always_chain = false;
 				mainGame->ignore_chain = false;
@@ -1750,70 +1755,48 @@ bool ClientField::OnEvent(const irr::SEvent& event) {
 		case irr::KEY_F6:
 		case irr::KEY_F7:
 		case irr::KEY_F8: {
-			if(!event.KeyInput.PressedDown && !mainGame->dInfo.isReplay && mainGame->dInfo.player_type != 7 && mainGame->dInfo.isStarted
-					&& !mainGame->wCardDisplay->isVisible() && !mainGame->HasFocus(irr::gui::EGUIET_EDIT_BOX)) {
-				int loc_id = 0;
-				display_cards.clear();
-				switch(event.KeyInput.Key) {
-					case irr::KEY_F1:
-						if(cant_check_grave)
-							break;
-						loc_id = 1004;
-						for(auto it = grave[0].rbegin(); it != grave[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F2:
-						loc_id = 1005;
-						for(auto it = remove[0].rbegin(); it != remove[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F3:
-						loc_id = 1006;
-						for(auto it = extra[0].rbegin(); it != extra[0].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F4:
-						loc_id = 1007;
-						for(auto it = mzone[0].begin(); it != mzone[0].end(); ++it) {
-							if(*it) {
-								for(auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
-									display_cards.push_back(*oit);
-							}
-						}
-						break;
-					case irr::KEY_F5:
-						if(cant_check_grave)
-							break;
-						loc_id = 1004;
-						for(auto it = grave[1].rbegin(); it != grave[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F6:
-						loc_id = 1005;
-						for(auto it = remove[1].rbegin(); it != remove[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F7:
-						loc_id = 1006;
-						for(auto it = extra[1].rbegin(); it != extra[1].rend(); ++it)
-							display_cards.push_back(*it);
-						break;
-					case irr::KEY_F8:
-						loc_id = 1007;
-						for(auto it = mzone[1].begin(); it != mzone[1].end(); ++it) {
-							if(*it) {
-								for(auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
-									display_cards.push_back(*oit);
-							}
-						}
-						break;
+			if (event.KeyInput.PressedDown)
+				break;
+			if (!mainGame->dInfo.isStarted || mainGame->dInfo.isReplay || mainGame->dInfo.player_type == 7)
+				break;
+			if (mainGame->wCardDisplay->isVisible())
+				break;
+			int loc_id = 0;
+			static_assert(irr::KEY_F8 - irr::KEY_F1 == 7, "keycode F1-F8 must be consecutive");
+			int p = (event.KeyInput.Key >= irr::KEY_F5) ? 1 : 0;
+			int key_offset = (p == 1) ? (event.KeyInput.Key - irr::KEY_F5) : (event.KeyInput.Key - irr::KEY_F1);
+			display_cards.clear();
+			if (key_offset == 0) { // Grave
+				if (cant_check_grave)
+					break;
+				loc_id = 1004;
+				for (auto it = grave[p].rbegin(); it != grave[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 1) { // Remove
+				loc_id = 1005;
+				for (auto it = remove[p].rbegin(); it != remove[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 2) { // Extra
+				loc_id = 1006;
+				for (auto it = extra[p].rbegin(); it != extra[p].rend(); ++it)
+					display_cards.push_back(*it);
+			}
+			else if (key_offset == 3) { // Overlay
+				loc_id = 1007;
+				for (auto it = mzone[p].begin(); it != mzone[p].end(); ++it) {
+					if (*it) {
+						for (auto oit = (*it)->overlayed.begin(); oit != (*it)->overlayed.end(); ++oit)
+							display_cards.push_back(*oit);
+					}
 				}
-				if(display_cards.size()) {
-					wchar_t formatBuffer[2048];
-					myswprintf(formatBuffer, L"%ls(%d)", dataManager.GetSysString(loc_id), display_cards.size());
-					mainGame->wCardDisplay->setText(formatBuffer);
-					ShowLocationCard();
-				}
+			}
+			if (loc_id && display_cards.size()) {
+				wchar_t formatBuffer[2048];
+				myswprintf(formatBuffer, L"%ls(%zu)", dataManager.GetSysString(loc_id), display_cards.size());
+				mainGame->wCardDisplay->setText(formatBuffer);
+				ShowLocationCard();
 			}
 			break;
 		}
@@ -2133,8 +2116,8 @@ void ClientField::GetHoverField(int x, int y) {
 				hovered_sequence = hc - 1 - (x - ofRect.UpperLeftCorner.X) * (hc - 1) / ((cardSize + cardSpace) * 5);
 		}
 	} else {
-		double screenx = x / 1024.0 * 1.35 - 0.90;
-		double screeny = y / 640.0 * 0.84 - 0.42;
+		double screenx = x / static_cast<double>(GAME_WINDOW_WIDTH) * 1.35 - 0.90;
+		double screeny = y / static_cast<double>(GAME_WINDOW_HEIGHT) * 0.84 - 0.42;
 		double angle = 0.798056 - atan(screeny);	//0.798056 = arctan(8.0/7.8)
 		double vlen = sqrt(1.0 + screeny * screeny);
 		double boardx = 4.2 + 7.8 * screenx / vlen / cos(angle);

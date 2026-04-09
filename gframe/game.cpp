@@ -28,8 +28,6 @@ namespace irr {
 #endif //YGOPRO_SERVER_MODE
 #include <thread>
 
-const unsigned short PRO_VERSION = 0x1362;
-
 namespace ygo {
 
 Game* mainGame;
@@ -77,13 +75,13 @@ HostInfo game_info;
 
 void Game::MainServerLoop() {
 #ifdef SERVER_ZIP_SUPPORT
-	DataManager::FileSystem = new irr::io::CFileSystem();
+	dataManager.FileSystem = new irr::io::CFileSystem();
 #endif
 	deckManager.LoadLFList();
-	dataManager.LoadDB(L"cards.cdb");
+	dataManager.LoadDB("cards.cdb");
 	LoadExpansions();
 #ifdef SERVER_PRO2_SUPPORT
-	DataManager::FileSystem->addFileArchive("data/script.zip", true, false, irr::io::EFAT_ZIP);
+	dataManager.FileSystem->addFileArchive("data/script.zip", true, false, irr::io::EFAT_ZIP);
 #endif
 
 	server_port = NetServer::StartServer(server_port);
@@ -122,9 +120,11 @@ bool Game::Initialize() {
 		ErrorLog("Failed to load textures!");
 		return false;
 	}
-	DataManager::FileSystem = device->getFileSystem();
-	if(!dataManager.LoadDB(L"cards.cdb")) {
-		ErrorLog("Failed to load card database (cards.cdb)!");
+	dataManager.FileSystem = device->getFileSystem();
+	if(!dataManager.LoadDB("cards.cdb")) {
+		std::string errmsg = "Failed to load card database (cards.cdb)! ";
+		errmsg.append(dataManager.errmsg);
+		ErrorLog(errmsg.c_str());
 		return false;
 	}
 	if(!dataManager.LoadStrings("strings.conf")) {
@@ -135,20 +135,20 @@ bool Game::Initialize() {
 	env = device->getGUIEnvironment();
 	numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 16);
 	if(!numFont) {
-		const wchar_t* numFontPaths[] = {
-			L"./fonts/numFont.ttf",
-			L"./fonts/numFont.ttc",
-			L"./fonts/numFont.otf",
-			L"C:/Windows/Fonts/arialbd.ttf",
-			L"/usr/share/fonts/truetype/DroidSansFallbackFull.ttf",
-			L"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
-			L"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc",
-			L"/usr/share/fonts/noto-cjk/NotoSansCJK-Bold.ttc",
-			L"/System/Library/Fonts/SFNSTextCondensed-Bold.otf",
-			L"/System/Library/Fonts/SFNS.ttf",
+		const char* numFontPaths[] = {
+			"./fonts/numFont.ttf",
+			"./fonts/numFont.ttc",
+			"./fonts/numFont.otf",
+			"C:/Windows/Fonts/arialbd.ttf",
+			"/usr/share/fonts/truetype/DroidSansFallbackFull.ttf",
+			"/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc",
+			"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Bold.ttc",
+			"/usr/share/fonts/noto-cjk/NotoSansCJK-Bold.ttc",
+			"/System/Library/Fonts/SFNSTextCondensed-Bold.otf",
+			"/System/Library/Fonts/SFNS.ttf",
 		};
-		for(const wchar_t* path : numFontPaths) {
-			BufferIO::CopyWideString(path, gameConf.numfont);
+		for(auto path : numFontPaths) {
+			BufferIO::CopyString(path, gameConf.numfont);
 			numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 16);
 			if(numFont)
 				break;
@@ -156,25 +156,25 @@ bool Game::Initialize() {
 	}
 	textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, gameConf.textfontsize);
 	if(!textFont) {
-		const wchar_t* textFontPaths[] = {
-			L"./fonts/textFont.ttf",
-			L"./fonts/textFont.ttc",
-			L"./fonts/textFont.otf",
-			L"C:/Windows/Fonts/msyh.ttc",
-			L"C:/Windows/Fonts/msyh.ttf",
-			L"C:/Windows/Fonts/simsun.ttc",
-			L"C:/Windows/Fonts/YuGothM.ttc",
-			L"C:/Windows/Fonts/meiryo.ttc",
-			L"C:/Windows/Fonts/msgothic.ttc",
-			L"/usr/share/fonts/truetype/DroidSansFallbackFull.ttf",
-			L"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-			L"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc",
-			L"/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
-			L"/System/Library/Fonts/PingFang.ttc",
-			L"/System/Library/Fonts/STHeiti Medium.ttc",
+		const char* textFontPaths[] = {
+			"./fonts/textFont.ttf",
+			"./fonts/textFont.ttc",
+			"./fonts/textFont.otf",
+			"C:/Windows/Fonts/msyh.ttc",
+			"C:/Windows/Fonts/msyh.ttf",
+			"C:/Windows/Fonts/simsun.ttc",
+			"C:/Windows/Fonts/YuGothM.ttc",
+			"C:/Windows/Fonts/meiryo.ttc",
+			"C:/Windows/Fonts/msgothic.ttc",
+			"/usr/share/fonts/truetype/DroidSansFallbackFull.ttf",
+			"/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+			"/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc",
+			"/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+			"/System/Library/Fonts/PingFang.ttc",
+			"/System/Library/Fonts/STHeiti Medium.ttc",
 		};
-		for(const wchar_t* path : textFontPaths) {
-			BufferIO::CopyWideString(path, gameConf.textfont);
+		for(auto path : textFontPaths) {
+			BufferIO::CopyString(path, gameConf.textfont);
 			textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, gameConf.textfontsize);
 			if(textFont)
 				break;
@@ -182,7 +182,6 @@ bool Game::Initialize() {
 	}
 	if(!numFont || !textFont) {
 		wchar_t fpath[1024]{};
-		fpath[0] = 0;
 		FileSystem::TraversalDir(L"./fonts", [&fpath](const wchar_t* name, bool isdir) {
 			if(!isdir && (IsExtension(name, L".ttf") || IsExtension(name, L".ttc") || IsExtension(name, L".otf"))) {
 				myswprintf(fpath, L"./fonts/%ls", name);
@@ -193,11 +192,11 @@ bool Game::Initialize() {
 			return false;
 		}
 		if(!numFont) {
-			BufferIO::CopyWideString(fpath, gameConf.numfont);
+			BufferIO::EncodeUTF8(fpath, gameConf.numfont);
 			numFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.numfont, 16);
 		}
 		if(!textFont) {
-			BufferIO::CopyWideString(fpath, gameConf.textfont);
+			BufferIO::EncodeUTF8(fpath, gameConf.textfont);
 			textFont = irr::gui::CGUITTFont::createTTFont(env, gameConf.textfont, gameConf.textfontsize);
 		}
 	}
@@ -645,16 +644,16 @@ bool Game::Initialize() {
 	wANAttribute = env->addWindow(irr::core::rect<irr::s32>(500, 200, 830, 285), false, dataManager.GetSysString(562));
 	wANAttribute->getCloseButton()->setVisible(false);
 	wANAttribute->setVisible(false);
-	for(int filter = 0x1, i = 0; i < 7; filter <<= 1, ++i)
+	for (int i = 0; i < ATTRIBUTES_COUNT; ++i)
 		chkAttribute[i] = env->addCheckBox(false, irr::core::rect<irr::s32>(10 + (i % 4) * 80, 25 + (i / 4) * 25, 90 + (i % 4) * 80, 50 + (i / 4) * 25),
-		                                   wANAttribute, CHECK_ATTRIBUTE, dataManager.FormatAttribute(filter).c_str());
+			wANAttribute, CHECK_ATTRIBUTE, dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i));
 	//announce race
 	wANRace = env->addWindow(irr::core::rect<irr::s32>(480, 200, 850, 410), false, dataManager.GetSysString(563));
 	wANRace->getCloseButton()->setVisible(false);
 	wANRace->setVisible(false);
-	for(int filter = 0x1, i = 0; i < RACES_COUNT; filter <<= 1, ++i)
+	for (int i = 0; i < RACES_COUNT; ++i)
 		chkRace[i] = env->addCheckBox(false, irr::core::rect<irr::s32>(10 + (i % 4) * 90, 25 + (i / 4) * 25, 100 + (i % 4) * 90, 50 + (i / 4) * 25),
-		                              wANRace, CHECK_RACE, dataManager.FormatRace(filter).c_str());
+			wANRace, CHECK_RACE, dataManager.GetSysString(DataManager::STRING_ID_RACE + i));
 	//selection hint
 	stHintMsg = env->addStaticText(L"", irr::core::rect<irr::s32>(500, 60, 820, 90), true, false, 0, -1, false);
 	stHintMsg->setBackgroundColor(0xc0ffffff);
@@ -787,25 +786,25 @@ bool Game::Initialize() {
 	cbAttribute = env->addComboBox(irr::core::rect<irr::s32>(60, 20 + 50 / 6, 195, 40 + 50 / 6), wFilter, COMBOBOX_ATTRIBUTE);
 	cbAttribute->setMaxSelectionRows(10);
 	cbAttribute->addItem(dataManager.GetSysString(1310), 0);
-	for (int filter = 0; filter < ATTRIBUTES_COUNT; ++filter)
-		cbAttribute->addItem(dataManager.FormatAttribute(0x1U << filter).c_str(), 0x1U << filter);
+	for (int i = 0; i < ATTRIBUTES_COUNT; ++i)
+		cbAttribute->addItem(dataManager.GetSysString(DataManager::STRING_ID_ATTRIBUTE + i), 0x1U << i);
 	stRace = env->addStaticText(dataManager.GetSysString(1321), irr::core::rect<irr::s32>(10, 42 + 75 / 6, 70, 62 + 75 / 6), false, false, wFilter);
 	cbRace = env->addComboBox(irr::core::rect<irr::s32>(60, 40 + 75 / 6, 195, 60 + 75 / 6), wFilter, COMBOBOX_RACE);
 	cbRace->setMaxSelectionRows(10);
 	cbRace->addItem(dataManager.GetSysString(1310), 0);
-	for (int filter = 0; filter < RACES_COUNT; ++filter)
-		cbRace->addItem(dataManager.FormatRace(0x1U << filter).c_str(), 0x1U << filter);
+	for (int i = 0; i < RACES_COUNT; ++i)
+		cbRace->addItem(dataManager.GetSysString(DataManager::STRING_ID_RACE + i), 0x1U << i);
 	stAttack = env->addStaticText(dataManager.GetSysString(1322), irr::core::rect<irr::s32>(205, 22 + 50 / 6, 280, 42 + 50 / 6), false, false, wFilter);
 	ebAttack = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 20 + 50 / 6, 340, 40 + 50 / 6), true, wFilter, EDITBOX_INPUTS);
 	ebAttack->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stDefense = env->addStaticText(dataManager.GetSysString(1323), irr::core::rect<irr::s32>(205, 42 + 75 / 6, 280, 62 + 75 / 6), false, false, wFilter);
 	ebDefense = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 40 + 75 / 6, 340, 60 + 75 / 6), true, wFilter, EDITBOX_INPUTS);
 	ebDefense->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stStar = env->addStaticText(dataManager.GetSysString(1324), irr::core::rect<irr::s32>(10, 62 + 100 / 6, 80, 82 + 100 / 6), false, false, wFilter);
-	ebStar = env->addEditBox(L"", irr::core::rect<irr::s32>(60, 60 + 100 / 6, 100, 80 + 100 / 6), true, wFilter, EDITBOX_INPUTS);
+	stStar = env->addStaticText(dataManager.GetSysString(1324), irr::core::rect<irr::s32>(10, 62 + 100 / 6, 70, 82 + 100 / 6), false, false, wFilter);
+	ebStar = env->addEditBox(L"", irr::core::rect<irr::s32>(60, 60 + 100 / 6, 95, 80 + 100 / 6), true, wFilter, EDITBOX_INPUTS);
 	ebStar->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
-	stScale = env->addStaticText(dataManager.GetSysString(1336), irr::core::rect<irr::s32>(101, 62 + 100 / 6, 150, 82 + 100 / 6), false, false, wFilter);
-	ebScale = env->addEditBox(L"", irr::core::rect<irr::s32>(150, 60 + 100 / 6, 195, 80 + 100 / 6), true, wFilter, EDITBOX_INPUTS);
+	stScale = env->addStaticText(dataManager.GetSysString(1336), irr::core::rect<irr::s32>(105, 62 + 100 / 6, 165, 82 + 100 / 6), false, false, wFilter);
+	ebScale = env->addEditBox(L"", irr::core::rect<irr::s32>(155, 60 + 100 / 6, 195, 80 + 100 / 6), true, wFilter, EDITBOX_INPUTS);
 	ebScale->setTextAlignment(irr::gui::EGUIA_CENTER, irr::gui::EGUIA_CENTER);
 	stSearch = env->addStaticText(dataManager.GetSysString(1325), irr::core::rect<irr::s32>(205, 62 + 100 / 6, 280, 82 + 100 / 6), false, false, wFilter);
 	ebCardName = env->addEditBox(L"", irr::core::rect<irr::s32>(260, 60 + 100 / 6, 390, 80 + 100 / 6), true, wFilter, EDITBOX_KEYWORD);
@@ -816,7 +815,7 @@ bool Game::Initialize() {
 		btnStartFilter->setRelativePosition(irr::core::rect<irr::s32>(260, 80 + 125 / 6, 390, 100 + 125 / 6));
 		btnClearFilter = env->addButton(irr::core::rect<irr::s32>(205, 80 + 125 / 6, 255, 100 + 125 / 6), wFilter, BUTTON_CLEAR_FILTER, dataManager.GetSysString(1304));
 	}
-	wCategories = env->addWindow(irr::core::rect<irr::s32>(600, 60, 1000, 305), false, L"");
+	wCategories = env->addWindow(irr::core::rect<irr::s32>(600, 55, 1000, 300), false, L"");
 	wCategories->getCloseButton()->setVisible(false);
 	wCategories->setDrawTitlebar(false);
 	wCategories->setDraggable(false);
@@ -831,7 +830,7 @@ bool Game::Initialize() {
 	for(int i = 0; i < 32; ++i)
 		chkCategory[i] = env->addCheckBox(false, irr::core::recti(10 + (i % 4) * catewidth, 5 + (i / 4) * 25, 10 + (i % 4 + 1) * catewidth, 5 + (i / 4 + 1) * 25), wCategories, -1, dataManager.GetSysString(1100 + i));
 	int wcatewidth = catewidth * 4 + 16;
-	wCategories->setRelativePosition(irr::core::rect<irr::s32>(1000 - wcatewidth, 60, 1000, 305));
+	wCategories->setRelativePosition(irr::core::rect<irr::s32>(1000 - wcatewidth, 55, 1000, 300));
 	btnCategoryOK->setRelativePosition(irr::core::recti(wcatewidth / 2 - 50, 210, wcatewidth / 2 + 50, 235));
 	btnMarksFilter = env->addButton(irr::core::rect<irr::s32>(60, 80 + 125 / 6, 195, 100 + 125 / 6), wFilter, BUTTON_MARKS_FILTER, dataManager.GetSysString(1374));
 	wLinkMarks = env->addWindow(irr::core::rect<irr::s32>(700, 30, 820, 150), false, L"");
@@ -917,21 +916,21 @@ bool Game::Initialize() {
 	btnRSYes = env->addButton(irr::core::rect<irr::s32>(70, 80, 140, 105), wReplaySave, BUTTON_REPLAY_SAVE, dataManager.GetSysString(1341));
 	btnRSNo = env->addButton(irr::core::rect<irr::s32>(170, 80, 240, 105), wReplaySave, BUTTON_REPLAY_CANCEL, dataManager.GetSysString(1212));
 	//replay control
-	wReplayControl = env->addStaticText(L"", irr::core::rect<irr::s32>(205, 118, 295, 273), true, false, 0, -1, true);
+	wReplayControl = env->addStaticText(L"", irr::core::rect<irr::s32>(205, 143, 295, 273), true, false, 0, -1, true);
 	wReplayControl->setVisible(false);
 	btnReplayStart = env->addButton(irr::core::rect<irr::s32>(5, 5, 85, 25), wReplayControl, BUTTON_REPLAY_START, dataManager.GetSysString(1343));
-	btnReplayPause = env->addButton(irr::core::rect<irr::s32>(5, 30, 85, 50), wReplayControl, BUTTON_REPLAY_PAUSE, dataManager.GetSysString(1344));
+	btnReplayPause = env->addButton(irr::core::rect<irr::s32>(5, 5, 85, 25), wReplayControl, BUTTON_REPLAY_PAUSE, dataManager.GetSysString(1344));
+	btnReplaySwap = env->addButton(irr::core::rect<irr::s32>(5, 30, 85, 50), wReplayControl, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
 	btnReplayStep = env->addButton(irr::core::rect<irr::s32>(5, 55, 85, 75), wReplayControl, BUTTON_REPLAY_STEP, dataManager.GetSysString(1345));
 	btnReplayUndo = env->addButton(irr::core::rect<irr::s32>(5, 80, 85, 100), wReplayControl, BUTTON_REPLAY_UNDO, dataManager.GetSysString(1360));
-	btnReplaySwap = env->addButton(irr::core::rect<irr::s32>(5, 105, 85, 125), wReplayControl, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
-	btnReplayExit = env->addButton(irr::core::rect<irr::s32>(5, 130, 85, 150), wReplayControl, BUTTON_REPLAY_EXIT, dataManager.GetSysString(1347));
+	btnReplayExit = env->addButton(irr::core::rect<irr::s32>(5, 105, 85, 125), wReplayControl, BUTTON_REPLAY_EXIT, dataManager.GetSysString(1347));
 	//chat
-	wChat = env->addWindow(irr::core::rect<irr::s32>(305, 615, 1020, 640), false, L"");
+	wChat = env->addWindow(irr::core::rect<irr::s32>(307, 615, GAME_WINDOW_WIDTH, GAME_WINDOW_HEIGHT), false, L"");
 	wChat->getCloseButton()->setVisible(false);
 	wChat->setDraggable(false);
 	wChat->setDrawTitlebar(false);
 	wChat->setVisible(false);
-	ebChatInput = env->addEditBox(L"", irr::core::rect<irr::s32>(3, 2, 710, 22), true, wChat, EDITBOX_CHAT);
+	ebChatInput = env->addEditBox(L"", irr::core::rect<irr::s32>(3, 2, 711, 22), true, wChat, EDITBOX_CHAT);
 	//swap
 	btnSpectatorSwap = env->addButton(irr::core::rect<irr::s32>(205, 100, 295, 135), 0, BUTTON_REPLAY_SWAP, dataManager.GetSysString(1346));
 	btnSpectatorSwap->setVisible(false);
@@ -1002,10 +1001,10 @@ bool Game::Initialize() {
 		env->getSkin()->setColor((irr::gui::EGUI_DEFAULT_COLOR)i, col);
 	}
 	auto size = driver->getScreenSize();
-	if(window_size != size) {
+	if(window_size != size) { // On the first run, window_size is (0, 0), so this condition always triggers a resize
 		window_size = size;
-		xScale = window_size.Width / 1024.0;
-		yScale = window_size.Height / 640.0;
+		xScale = window_size.Width / static_cast<float>(GAME_WINDOW_WIDTH);
+		yScale = window_size.Height / static_cast<float>(GAME_WINDOW_HEIGHT);
 		OnResize();
 	}
 	return true;
@@ -1029,12 +1028,12 @@ void Game::MainLoop() {
 		auto size = driver->getScreenSize();
 		if(window_size != size) {
 			window_size = size;
-			xScale = window_size.Width / 1024.0;
-			yScale = window_size.Height / 640.0;
+			xScale = window_size.Width / static_cast<float>(GAME_WINDOW_WIDTH);
+			yScale = window_size.Height / static_cast<float>(GAME_WINDOW_HEIGHT);
 			OnResize();
 		}
-		linePatternD3D = (linePatternD3D + 1) % 30;
-		linePatternGL = (linePatternGL << 1) | (linePatternGL >> 15);
+		linePattern = (linePattern + 1) % 30;
+		stippleMask = (stippleMask << 1) | (stippleMask >> 15);
 		atkframe += 0.1f;
 		atkdy = (float)sin(atkframe);
 		driver->beginScene(true, true, irr::video::SColor(0, 0, 0, 0));
@@ -1137,111 +1136,120 @@ void Game::InitStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, i
 	scrCardText->setPos(0);
 }
 std::wstring Game::SetStaticText(irr::gui::IGUIStaticText* pControl, irr::u32 cWidth, irr::gui::CGUITTFont* font, const wchar_t* text, irr::u32 pos) {
-	int pbuffer = 0;
 	irr::u32 _width = 0, _height = 0;
 	wchar_t prev = 0;
-	wchar_t strBuffer[4096];
-	std::wstring ret;
+	std::wstring result;
+	result.reserve(4096);
+	const size_t text_len = std::wcslen(text);
 
-	for(size_t i = 0; text[i] != 0 && i < std::wcslen(text); ++i) {
+	for(size_t i = 0; i < text_len ; ++i) {
 		wchar_t c = text[i];
 		irr::u32 w = font->getCharDimension(c).Width + font->getKerningWidth(c, prev);
 		prev = c;
-		if(text[i] == L'\r') {
+		if (c == L'\r') {
 			continue;
-		} else if(text[i] == L'\n') {
-			strBuffer[pbuffer++] = L'\n';
+		}
+		if (c == L'\n') {
+			result.push_back(L'\n');
 			_width = 0;
 			_height++;
 			prev = 0;
-			if(_height == pos)
-				pbuffer = 0;
+			if (_height == pos)
+				result.clear();
 			continue;
-		} else if(_width > 0 && _width + w > cWidth) {
-			strBuffer[pbuffer++] = L'\n';
+		}
+		if (_width > 0 && _width + w > cWidth) {
+			result.push_back(L'\n');
 			_width = 0;
 			_height++;
 			prev = 0;
-			if(_height == pos)
-				pbuffer = 0;
+			if (_height == pos)
+				result.clear();
 		}
 		_width += w;
-		strBuffer[pbuffer++] = c;
+		result.push_back(c);
 	}
-	strBuffer[pbuffer] = 0;
-	if(pControl) pControl->setText(strBuffer);
-	ret.assign(strBuffer);
-	return ret;
+	if (pControl)
+		pControl->setText(result.c_str());
+	return result;
 }
 #endif //YGOPRO_SERVER_MODE
 void Game::LoadExpansions() {
 #ifdef SERVER_PRO2_SUPPORT
-	FileSystem::TraversalDir(L"./cdb", [](const wchar_t* name, bool isdir) {
+	FileSystem::TraversalDir("./cdb", [](const char* name, bool isdir) {
 		if (isdir)
 			return;
-		wchar_t fpath[1024];
-		myswprintf(fpath, L"./cdb/%ls", name);
-		if(IsExtension(name, L".cdb")) {
+		char fpath[1024];
+		mysnprintf(fpath, "./cdb/%s", name);
+		if(IsExtension(name, ".cdb")) {
 			dataManager.LoadDB(fpath);
 		}
 	});
 #endif // SERVER_PRO2_SUPPORT
-	FileSystem::TraversalDir(L"./expansions", [](const wchar_t* name, bool isdir) {
+	FileSystem::TraversalDir("./expansions", [](const char* name, bool isdir) {
 		if (isdir)
 			return;
-		wchar_t fpath[1024];
-		myswprintf(fpath, L"./expansions/%ls", name);
-		if (IsExtension(name, L".cdb")) {
-			dataManager.LoadDB(fpath);
+		char fpath[1024];
+		mysnprintf(fpath, "./expansions/%s", name);
+		if (IsExtension(name, ".cdb")) {
+			if (!dataManager.LoadDB(fpath)) {
+#ifndef YGOPRO_SERVER_MODE
+				std::string errmsg = "Warning: Failed to load DB file on disk (";
+				errmsg.append(fpath);
+				errmsg.append(")! ");
+				errmsg.append(dataManager.errmsg);
+				mainGame->ErrorLog(errmsg.c_str());
+#endif
+			}
 			return;
 		}
 #ifndef YGOPRO_SERVER_MODE
-		if (IsExtension(name, L".conf")) {
-			char upath[1024];
-			BufferIO::EncodeUTF8(fpath, upath);
-			dataManager.LoadStrings(upath);
+		if (IsExtension(name, ".conf")) {
+			dataManager.LoadStrings(fpath);
 			return;
 		}
 #endif // YGOPRO_SERVER_MODE
 #if defined(SERVER_ZIP_SUPPORT) || !defined(YGOPRO_SERVER_MODE)
-		if (IsExtension(name, L".zip") || IsExtension(name, L".ypk")) {
-#ifdef _WIN32
-			DataManager::FileSystem->addFileArchive(fpath, true, false, irr::io::EFAT_ZIP);
-#else
-			char upath[1024];
-			BufferIO::EncodeUTF8(fpath, upath);
-			DataManager::FileSystem->addFileArchive(upath, true, false, irr::io::EFAT_ZIP);
-#endif
+		if (IsExtension(name, ".zip") || IsExtension(name, ".ypk")) {
+			dataManager.FileSystem->addFileArchive(fpath, true, false, irr::io::EFAT_ZIP);
 			return;
 		}
 #endif //SERVER_ZIP_SUPPORT
 	});
 #if defined(SERVER_ZIP_SUPPORT) || !defined(YGOPRO_SERVER_MODE)
-	for(irr::u32 i = 0; i < DataManager::FileSystem->getFileArchiveCount(); ++i) {
-		auto archive = DataManager::FileSystem->getFileArchive(i)->getFileList();
+	for(irr::u32 i = 0; i < dataManager.FileSystem->getFileArchiveCount(); ++i) {
+		auto archive = dataManager.FileSystem->getFileArchive(i)->getFileList();
 		for(irr::u32 j = 0; j < archive->getFileCount(); ++j) {
-#ifdef _WIN32
-			const wchar_t* fname = archive->getFullFileName(j).c_str();
-#else
-			wchar_t fname[1024];
-			const char* uname = archive->getFullFileName(j).c_str();
-			BufferIO::DecodeUTF8(uname, fname);
+			const char* name = archive->getFullFileName(j).c_str();
+			if (IsExtension(name, ".cdb")) {
+				if (!dataManager.LoadDB(name)) {
+#ifndef YGOPRO_SERVER_MODE
+					std::string errmsg = "Warning: Failed to load DB file in expansion archive (";
+					errmsg.append(name);
+					errmsg.append(")! ");
+					errmsg.append(dataManager.errmsg);
+					mainGame->ErrorLog(errmsg.c_str());
 #endif
-			if (IsExtension(fname, L".cdb")) {
-				dataManager.LoadDB(fname);
+				}
 				continue;
 			}
 #ifndef YGOPRO_SERVER_MODE
-			if (IsExtension(fname, L".conf")) {
-#ifdef _WIN32
-				auto reader = DataManager::FileSystem->createAndOpenFile(fname);
-#else
-				auto reader = DataManager::FileSystem->createAndOpenFile(uname);
-#endif
+			if (IsExtension(name, ".conf")) {
+				auto reader = dataManager.FileSystem->createAndOpenFile(name);
 				dataManager.LoadStrings(reader);
 				continue;
 			}
-			if (!mywcsncasecmp(fname, L"pack/", 5) && IsExtension(fname, L".ydk")) {
+			if (!mystrncasecmp(name, "pack/", 5) && IsExtension(name, ".ydk")) {
+				wchar_t fname[1024];
+				int len = BufferIO::DecodeUTF8(name, fname);
+				// TODO: zip file may contain non-UTF8 file name. DecodeUTF8 can't parse it and returns 0.
+				if (!len) {
+					std::string errmsg = "Warning: Failed to decode deck file name in expansion archive (";
+					errmsg.append(name);
+					errmsg.append(")! Please make sure the file name is UTF-8 encoded in the archive.");
+					mainGame->ErrorLog(errmsg.c_str());
+					continue;
+				}
 				deckBuilder.expansionPacks.push_back(fname);
 				continue;
 			}
@@ -1301,11 +1309,8 @@ void Game::RefreshDeck(const wchar_t* deckpath, const std::function<void(const w
 	}
 	FileSystem::TraversalDir(deckpath, [additem](const wchar_t* name, bool isdir) {
 		if (!isdir && IsExtension(name, L".ydk")) {
-			size_t len = std::wcslen(name);
 			wchar_t deckname[256]{};
-			size_t count = std::min(len - 4, sizeof deckname / sizeof deckname[0] - 1);
-			std::wcsncpy(deckname, name, count);
-			deckname[count] = 0;
+			BufferIO::CopyWideString(name, deckname, std::wcslen(name) - 4);
 			additem(deckname);
 		}
 	});
@@ -1395,8 +1400,6 @@ void Game::LoadConfig() {
 			gameConf.antialias = std::strtol(valbuf, nullptr, 10);
 		} else if(!std::strcmp(strbuf, "use_d3d")) {
 			gameConf.use_d3d = std::strtol(valbuf, nullptr, 10) > 0;
-		} else if(!std::strcmp(strbuf, "use_image_scale")) {
-			gameConf.use_image_scale = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if (!std::strcmp(strbuf, "use_image_scale_multi_thread")) {
 			gameConf.use_image_scale_multi_thread = std::strtol(valbuf, nullptr, 10) > 0;
 		} else if (!std::strcmp(strbuf, "use_image_load_background_thread")) {
@@ -1506,9 +1509,9 @@ void Game::LoadConfig() {
 				if (fontsize > 0)
 					gameConf.textfontsize = fontsize;
 				*last_space = 0;
-				BufferIO::DecodeUTF8(valbuf, gameConf.textfont);
+				BufferIO::CopyString(valbuf, gameConf.textfont);
 			} else if (!std::strcmp(strbuf, "numfont")) {
-				BufferIO::DecodeUTF8(valbuf, gameConf.numfont);
+				BufferIO::CopyString(valbuf, gameConf.numfont);
 			} else if (!std::strcmp(strbuf, "nickname")) {
 				BufferIO::DecodeUTF8(valbuf, gameConf.nickname);
 			} else if (!std::strcmp(strbuf, "gamename")) {
@@ -1531,7 +1534,6 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "#config file\n#nickname & gamename should be less than 20 characters\n");
 	char linebuf[CONFIG_LINE_SIZE];
 	std::fprintf(fp, "use_d3d = %d\n", gameConf.use_d3d ? 1 : 0);
-	std::fprintf(fp, "use_image_scale = %d\n", gameConf.use_image_scale ? 1 : 0);
 	std::fprintf(fp, "use_image_scale_multi_thread = %d\n", gameConf.use_image_scale_multi_thread ? 1 : 0);
 	std::fprintf(fp, "use_image_load_background_thread = %d\n", gameConf.use_image_load_background_thread ? 1 : 0);
 	std::fprintf(fp, "antialias = %d\n", gameConf.antialias);
@@ -1545,10 +1547,8 @@ void Game::SaveConfig() {
 	std::fprintf(fp, "lastcategory = %s\n", linebuf);
 	BufferIO::EncodeUTF8(gameConf.lastdeck, linebuf);
 	std::fprintf(fp, "lastdeck = %s\n", linebuf);
-	BufferIO::EncodeUTF8(gameConf.textfont, linebuf);
-	std::fprintf(fp, "textfont = %s %d\n", linebuf, gameConf.textfontsize);
-	BufferIO::EncodeUTF8(gameConf.numfont, linebuf);
-	std::fprintf(fp, "numfont = %s\n", linebuf);
+	std::fprintf(fp, "textfont = %s %d\n", gameConf.textfont, gameConf.textfontsize);
+	std::fprintf(fp, "numfont = %s\n", gameConf.numfont);
 	std::fprintf(fp, "serverport = %d\n", gameConf.serverport);
 	BufferIO::EncodeUTF8(gameConf.lasthost, linebuf);
 	std::fprintf(fp, "lasthost = %s\n", linebuf);
@@ -1606,15 +1606,13 @@ void Game::ShowCardInfo(int code, bool resize) {
 	if(showingcode == code && !resize)
 		return;
 	wchar_t formatBuffer[256];
-	auto cit = dataManager.GetCodePointer(code);
-	bool is_valid = (cit != dataManager.datas_end());
+	auto& _datas = dataManager.GetDataTable();
+	auto cit = _datas.find(code);
+	bool is_valid = (cit != _datas.end());
 	imgCard->setImage(imageManager.GetTexture(code, true));
 	if (is_valid) {
 		auto& cd = cit->second;
-		if (cd.is_alternative())
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.alias), cd.alias);
-		else
-			myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
+		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(cd.get_original_code()), cd.get_original_code());
 	}
 	else {
 		myswprintf(formatBuffer, L"%ls[%08d]", dataManager.GetName(code), code);
@@ -1628,12 +1626,13 @@ void Game::ShowCardInfo(int code, bool resize) {
 	if (is_valid && !gameConf.hide_setname) {
 		auto& cd = cit->second;
 		auto target = cit;
-		if (cd.alias && dataManager.GetCodePointer(cd.alias) != dataManager.datas_end()) {
-			target = dataManager.GetCodePointer(cd.alias);
+		if (cd.rule_code && _datas.count(cd.rule_code)) {
+			target = _datas.find(cd.rule_code);
 		}
 		if (target->second.setcode[0]) {
 			offset = 23;// *yScale;
-			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), dataManager.FormatSetName(target->second.setcode).c_str());
+			const auto& setname = dataManager.FormatSetName(target->second.setcode);
+			myswprintf(formatBuffer, L"%ls%ls", dataManager.GetSysString(1329), setname.c_str());
 			stSetName->setText(formatBuffer);
 		}
 		else
@@ -1644,7 +1643,10 @@ void Game::ShowCardInfo(int code, bool resize) {
 	}
 	if(is_valid && cit->second.type & TYPE_MONSTER) {
 		auto& cd = cit->second;
-		myswprintf(formatBuffer, L"[%ls] %ls/%ls", dataManager.FormatType(cd.type).c_str(), dataManager.FormatRace(cd.race).c_str(), dataManager.FormatAttribute(cd.attribute).c_str());
+		const auto& type = dataManager.FormatType(cd.type);
+		const auto& race = dataManager.FormatRace(cd.race);
+		const auto& attribute = dataManager.FormatAttribute(cd.attribute);
+		myswprintf(formatBuffer, L"[%ls] %ls/%ls", type.c_str(), race.c_str(), attribute.c_str());
 		stInfo->setText(formatBuffer);
 		int offset_info = 0;
 		irr::core::dimension2d<unsigned int> dtxt = guiFont->getDimension(formatBuffer);
@@ -1666,10 +1668,11 @@ void Game::ShowCardInfo(int code, bool resize) {
 				myswprintf(adBuffer, L"%d/%d", cd.attack, cd.defense);
 		} else {
 			form = L"LINK-";
+			const auto& link_marker = dataManager.FormatLinkMarker(cd.link_marker);
 			if(cd.attack < 0)
-				myswprintf(adBuffer, L"?/-   %ls", dataManager.FormatLinkMarker(cd.link_marker).c_str());
+				myswprintf(adBuffer, L"?/-   %ls", link_marker.c_str());
 			else
-				myswprintf(adBuffer, L"%d/-   %ls", cd.attack, dataManager.FormatLinkMarker(cd.link_marker).c_str());
+				myswprintf(adBuffer, L"%d/-   %ls", cd.attack, link_marker.c_str());
 		}
 		if(cd.type & TYPE_PENDULUM) {
 			myswprintf(scaleBuffer, L"   %d/%d", cd.lscale, cd.rscale);
@@ -1687,8 +1690,10 @@ void Game::ShowCardInfo(int code, bool resize) {
 		scrCardText->setRelativePosition(irr::core::rect<irr::s32>(287 * xScale - 20, (83 + offset_arrows) + offset, 287 * xScale, 324 * yScale));
 	}
 	else {
-		if (is_valid)
-			myswprintf(formatBuffer, L"[%ls]", dataManager.FormatType(cit->second.type).c_str());
+		if (is_valid) {
+			const auto& type = dataManager.FormatType(cit->second.type);
+			myswprintf(formatBuffer, L"[%ls]", type.c_str());
+		}
 		else
 			myswprintf(formatBuffer, L"[%ls]", dataManager.unknown_string);
 		stInfo->setText(formatBuffer);
@@ -1785,7 +1790,7 @@ void Game::AddDebugMsg(const char* msg) {
 	}
 	if (enable_log & 0x2) {
 		char msgbuf[1040];
-		std::snprintf(msgbuf, sizeof msgbuf, "[Script Error]: %s", msg);
+		mysnprintf(msgbuf, "[Script Error]: %s", msg);
 		ErrorLog(msgbuf);
 	}
 #endif //YGOPRO_SERVER_MODE
@@ -1886,7 +1891,7 @@ int Game::ChatLocalPlayer(int player) {
 	if(dInfo.isStarted || is_siding) {
 		if(dInfo.isInDuel)
 			// when in duel
-			player = mainGame->dInfo.isFirst ? player : OppositePlayer(player);
+			player = dInfo.isFirst ? player : OppositePlayer(player);
 		else {
 			// when changing side or waiting tp result
 			auto selftype_boundary = dInfo.isTag ? 2 : 1;
@@ -2090,9 +2095,9 @@ void Game::OnResize() {
 	wReplayControl->setRelativePosition(Resize(205, 143, 295, 273));
 	btnReplayStart->setRelativePosition(Resize(5, 5, 85, 25));
 	btnReplayPause->setRelativePosition(Resize(5, 5, 85, 25));
+	btnReplaySwap->setRelativePosition(Resize(5, 30, 85, 50));
 	btnReplayStep->setRelativePosition(Resize(5, 55, 85, 75));
 	btnReplayUndo->setRelativePosition(Resize(5, 80, 85, 100));
-	btnReplaySwap->setRelativePosition(Resize(5, 30, 85, 50));
 	btnReplayExit->setRelativePosition(Resize(5, 105, 85, 125));
 
 	btnSpectatorSwap->setRelativePosition(Resize(205, 100, 295, 135));
@@ -2223,8 +2228,8 @@ void Game::SetWindowsScale(float scale) {
 	GetWindowRect(hWnd, &rcWindow);
 	GetClientRect(hWnd, &rcClient);
 	MoveWindow(hWnd, rcWindow.left, rcWindow.top,
-		(rcWindow.right - rcWindow.left) - rcClient.right + 1024 * scale,
-		(rcWindow.bottom - rcWindow.top) - rcClient.bottom + 640 * scale,
+		(rcWindow.right - rcWindow.left) - rcClient.right + GAME_WINDOW_WIDTH * scale,
+		(rcWindow.bottom - rcWindow.top) - rcClient.bottom + GAME_WINDOW_HEIGHT * scale,
 		true);
 #endif
 }
