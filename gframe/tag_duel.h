@@ -61,6 +61,7 @@ protected:
 	DuelPlayer* players[4];
 	DuelPlayer* pplayer[4];
 	DuelPlayer* cur_player[2];
+    DuelPlayer* real_cur_player[2];
 	std::set<DuelPlayer*> observers;
 #ifdef YGOPRO_SERVER_MODE
 	DuelPlayer* cache_recorder{};

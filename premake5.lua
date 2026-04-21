@@ -7,6 +7,8 @@
 --          but build them on Windows, due to the lack of package manager on Windows.
 
 BUILD_LUA = true
+LUA_LIB_NAME = "lua" -- change this if you don't build Lua
+
 BUILD_EVENT = os.istarget("windows")
 
 BUILD_FREETYPE = os.istarget("windows")

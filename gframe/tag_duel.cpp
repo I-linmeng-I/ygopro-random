@@ -700,6 +700,14 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 	unsigned char* offset, *pbufw, *pbuf = msgbuffer;
 	int player, count, type;
 	while (pbuf - msgbuffer < (int)len) {
+        if(real_cur_player[0] == players[0])
+            cur_player[0] = players[0];
+        else
+            cur_player[0] = players[1];
+        if(real_cur_player[1] == players[2])
+            cur_player[1] = players[2];
+        else
+            cur_player[1] = players[3];
 		offset = pbuf;
 		unsigned char engType = BufferIO::Read<uint8_t>(pbuf);
 #ifdef YGOPRO_SERVER_MODE
@@ -828,6 +836,14 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		}
 		case MSG_SELECT_CARD:
 		case MSG_SELECT_TRIBUTE: {
+            if(real_cur_player[0] == players[0])
+                cur_player[0] = players[1];
+            else
+                cur_player[0] = players[0];
+            if(real_cur_player[1] == players[2])
+                cur_player[1] = players[3];
+            else
+                cur_player[1] = players[2];
 			player = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 3;
 			count = BufferIO::Read<uint8_t>(pbuf);
@@ -846,6 +862,14 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			return 1;
 		}
 		case MSG_SELECT_UNSELECT_CARD: {
+            if(real_cur_player[0] == players[0])
+                cur_player[0] = players[1];
+            else
+                cur_player[0] = players[0];
+            if(real_cur_player[1] == players[2])
+                cur_player[1] = players[3];
+            else
+                cur_player[1] = players[2];
 			player = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 4;
 			count = BufferIO::Read<uint8_t>(pbuf);
@@ -919,6 +943,14 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		}
 		case MSG_SORT_CARD: {
 			player = BufferIO::Read<uint8_t>(pbuf);
+            if(real_cur_player[0] == players[0])
+                cur_player[0] = players[1];
+            else
+                cur_player[0] = players[0];
+            if(real_cur_player[1] == players[2])
+                cur_player[1] = players[3];
+            else
+                cur_player[1] = players[2];
 			count = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += count * 7;
 			WaitforResponse(player);
@@ -1129,15 +1161,21 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 #endif
 			if(turn_count > 0) {
 				if(turn_count % 2 == 0) {
-					if(cur_player[0] == players[0])
-						cur_player[0] = players[1];
-					else
-						cur_player[0] = players[0];
+					if(cur_player[0] == players[0]){
+                        cur_player[0] = players[1];
+                        real_cur_player[0] = players[1];
+                    } else {
+                        cur_player[0] = players[0];
+                        real_cur_player[0] = players[0];
+                    }
 				} else {
-					if(cur_player[1] == players[2])
-						cur_player[1] = players[3];
-					else
-						cur_player[1] = players[2];
+					if(cur_player[1] == players[2]){
+                        cur_player[1] = players[3];
+                        real_cur_player[1] = players[3];
+                    } else {
+                        cur_player[1] = players[2];
+                        real_cur_player[1] = players[2];
+                    }
 				}
 			}
 			turn_count++;
