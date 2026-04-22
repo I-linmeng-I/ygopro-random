@@ -1818,6 +1818,14 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			break;
 		}
 		case MSG_ANNOUNCE_RACE: {
+            if(real_cur_player[0] == players[0])
+                cur_player[0] = players[1];
+            else
+                cur_player[0] = players[0];
+            if(real_cur_player[1] == players[2])
+                cur_player[1] = players[3];
+            else
+                cur_player[1] = players[2];
 			player = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 5;
 			WaitforResponse(player);
@@ -1825,6 +1833,14 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 			return 1;
 		}
 		case MSG_ANNOUNCE_ATTRIB: {
+            if(real_cur_player[0] == players[0])
+                cur_player[0] = players[1];
+            else
+                cur_player[0] = players[0];
+            if(real_cur_player[1] == players[2])
+                cur_player[1] = players[3];
+            else
+                cur_player[1] = players[2];
 			player = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 5;
 			WaitforResponse(player);
@@ -1833,6 +1849,14 @@ int TagDuel::Analyze(unsigned char* msgbuffer, unsigned int len) {
 		}
 		case MSG_ANNOUNCE_CARD:
 		case MSG_ANNOUNCE_NUMBER: {
+            if(real_cur_player[0] == players[0])
+                cur_player[0] = players[1];
+            else
+                cur_player[0] = players[0];
+            if(real_cur_player[1] == players[2])
+                cur_player[1] = players[3];
+            else
+                cur_player[1] = players[2];
 			player = BufferIO::Read<uint8_t>(pbuf);
 			count = BufferIO::Read<uint8_t>(pbuf);
 			pbuf += 4 * count;
