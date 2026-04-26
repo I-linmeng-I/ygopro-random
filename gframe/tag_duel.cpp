@@ -2340,7 +2340,8 @@ void TagDuel::RefreshExtra(int player, int flag, int use_cache)
 #ifdef YGOPRO_SERVER_MODE
 if(!dp || dp == cur_player[player])
 #endif
-	NetServer::SendBufferToPlayer(real_cur_player[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
+    NetServer::SendBufferToPlayer(real_cur_player[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
+	NetServer::SendBufferToPlayer(real_teammate[player], STOC_GAME_MSG, query_buffer.data(), len + 3);
 #ifdef YGOPRO_SERVER_MODE
 	if(!dp)
 		NetServer::ReSendToPlayer(replay_recorder);
@@ -2357,8 +2358,8 @@ if(!dp || dp == cur_player[player])
 	}
 	for(int i = 0; i < 4; ++i)
 		if(!dp || dp == players[i])
-			if(players[i] != real_cur_player[player])
-				NetServer::SendBufferToPlayer(players[i], STOC_GAME_MSG, query_buffer.data(), len + 3);
+			if(players[i] != real_cur_player[player] && players[i] != real_teammate[player])
+			    NetServer::SendBufferToPlayer(players[i], STOC_GAME_MSG, query_buffer.data(), len + 3);
 	if(!dp)
 		for(auto pit = observers.begin(); pit != observers.end(); ++pit)
 			NetServer::ReSendToPlayer(*pit);
