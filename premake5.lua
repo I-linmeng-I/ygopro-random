@@ -7,6 +7,8 @@
 --          but build them on Windows, due to the lack of package manager on Windows.
 
 BUILD_LUA = true
+LUA_LIB_NAME = "lua" -- change this if you don't build Lua
+
 BUILD_EVENT = os.istarget("windows")
 
 BUILD_FREETYPE = os.istarget("windows")
@@ -26,11 +28,6 @@ MINIAUDIO_BUILD_OPUS_VORBIS = os.istarget("windows")
 IRRKLANG_PRO = false
 IRRKLANG_PRO_BUILD_IKPMP3 = false
 
-SERVER_MODE = true
-SERVER_ZIP_SUPPORT = false
-SERVER_PRO2_SUPPORT = false
-SERVER_TAG_SURRENDER_CONFIRM = false
-
 -- Read settings from command line or environment variables
 
 newoption { trigger = "build-lua", category = "YGOPro - lua", description = "" }
@@ -38,7 +35,6 @@ newoption { trigger = "no-build-lua", category = "YGOPro - lua", description = "
 newoption { trigger = "lua-include-dir", category = "YGOPro - lua", description = "", value = "PATH" }
 newoption { trigger = "lua-lib-dir", category = "YGOPro - lua", description = "", value = "PATH" }
 newoption { trigger = "lua-lib-name", category = "YGOPro - lua", description = "", value = "NAME", default = LUA_LIB_NAME }
-newoption { trigger = "lua-deb", category = "YGOPro - lua", description = "Use Debian lua package" }
 
 newoption { trigger = "build-event", category = "YGOPro - event", description = "" }
 newoption { trigger = "no-build-event", category = "YGOPro - event", description = "" }
@@ -97,31 +93,6 @@ newoption { trigger = 'build-ikpmp3', category = "YGOPro - irrklang - ikpmp3", d
 newoption { trigger = "mac-arm", category = "YGOPro", description = "Compile for Apple Silicon Mac" }
 newoption { trigger = "mac-intel", category = "YGOPro", description = "Compile for Intel Mac" }
 
-newoption { trigger = "server-mode", category = "YGOPro - server", description = "" }
-newoption { trigger = "server-zip-support", category = "YGOPro - server", description = "" }
-newoption { trigger = "server-pro2-support", category = "YGOPro - server", description = "" }
-newoption { trigger = "server-tag-surrender-confirm", category = "YGOPro - server", description = "" }
-
-boolOptions = {
-    "no-lua-safe",
-    "no-side-check"
-}
-
-for _, boolOption in ipairs(boolOptions) do
-    newoption { trigger = boolOption, category = "YGOPro - options", description = "" }
-end
-
-numberOptions = {
-    "default-duel-rule",
-    "max-deck",
-    "min-deck",
-    "max-extra",
-    "max-side",
-}
-for _, numberOption in ipairs(numberOptions) do
-    newoption { trigger = numberOption, category = "YGOPro - options", description = "", value = "NUMBER" }
-end
-
 function GetParam(param)
     return _OPTIONS[param] or os.getenv(string.upper(string.gsub(param,"-","_")))
 end
@@ -132,35 +103,6 @@ function FindHeaderWithSubDir(header, subdir)
         result = path.join(result, subdir)
     end
     return result
-end
-
-function ApplyBoolean(param)
-    if GetParam(param) then
-        defines { "YGOPRO_" .. string.upper(string.gsub(param,"-","_")) }
-    end
-end
-
-function ApplyNumber(param)
-    local value = GetParam(param)
-    if not value then return end
-    local numberValue = tonumber(value)
-    if numberValue then
-        defines { "YGOPRO_" .. string.upper(string.gsub(param,"-","_")) .. "=" .. numberValue }
-    end
-end
-
-if GetParam("server-mode") then
-    SERVER_MODE = true
-end
-if GetParam("server-zip-support") then
-    SERVER_ZIP_SUPPORT = true
-end
-if GetParam("server-pro2-support") then
-    SERVER_PRO2_SUPPORT = true
-    SERVER_ZIP_SUPPORT = true
-end
-if GetParam("server-tag-surrender-confirm") then
-    SERVER_TAG_SURRENDER_CONFIRM = true
 end
 
 if GetParam("build-lua") then
@@ -174,26 +116,6 @@ if not BUILD_LUA then
     LUA_LIB_NAME = GetParam("lua-lib-name") or LUA_LIB_NAME
     LUA_INCLUDE_DIR = GetParam("lua-include-dir") or os.findheader("lua.h")
     LUA_LIB_DIR = GetParam("lua-lib-dir") or os.findlib(LUA_LIB_NAME)
-end
-
-if GetParam("lua-deb") then
-    BUILD_LUA = false
-    local lua_versions = { "5.4", "5.3" }
-    local lua_version = nil
-    for _, version in ipairs(lua_versions) do
-        local lua_lib_dir = os.findlib("lua" .. version .. "-c++")
-        if lua_lib_dir then
-            print("Found lua " .. version .. " at " .. lua_lib_dir)
-            lua_version = version
-            LUA_LIB_DIR = lua_lib_dir
-            break
-        end
-    end
-    if not lua_version then
-        error("Lua library not found. Please install lua by command 'sudo apt -y install liblua5.4-dev'")
-    end
-    LUA_LIB_NAME = "lua" .. lua_version .. "-c++"
-    LUA_INCLUDE_DIR = path.join("/usr/include", "lua" .. lua_version)
 end
 
 if GetParam("build-event") then
@@ -275,7 +197,7 @@ elseif GetParam("use-irrklang") then
     AUDIO_LIB = "irrklang"
 end
 
-if USE_AUDIO and not SERVER_MODE then
+if USE_AUDIO then
     AUDIO_LIB = GetParam("audio-lib") or AUDIO_LIB
     if AUDIO_LIB == "miniaudio" then
         if GetParam("miniaudio-support-opus-vorbis") then
@@ -347,14 +269,6 @@ workspace "YGOPro"
     objdir "obj"
 
     configurations { "Release", "Debug" }
-
-    for _, numberOption in ipairs(numberOptions) do
-        ApplyNumber(numberOption)
-    end
-
-    for _, boolOption in ipairs(boolOptions) do
-        ApplyBoolean(boolOption)
-    end
 
     filter "system:windows"
         systemversion "latest"
@@ -438,19 +352,16 @@ workspace "YGOPro"
     if BUILD_EVENT then
         include "event"
     end
-    if BUILD_FREETYPE and not SERVER_MODE then
+    if BUILD_FREETYPE then
         include "freetype"
     end
-    if BUILD_IRRLICHT and not SERVER_MODE then
+    if BUILD_IRRLICHT then
         include "irrlicht"
-    end
-    if BUILD_IRRLICHT and SERVER_MODE and SERVER_ZIP_SUPPORT then
-        include "irrlicht/premake5-only-zipreader.lua"
     end
     if BUILD_SQLITE then
         include "sqlite3"
     end
-    if USE_AUDIO and not SERVER_MODE then
+    if USE_AUDIO then
         if AUDIO_LIB=="miniaudio" then
             include "miniaudio"
         end
